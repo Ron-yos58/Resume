@@ -1011,8 +1011,8 @@ async function downloadPDF(){
 
     // Build a clean, standalone container — NO page-gap labels, NO UI elements
     const container = document.createElement('div');
-    // Anchor strictly to top-left with absolute positioning to prevent scroll offset issues
-    container.style.cssText = 'position:absolute;top:0;left:0;width:210mm;z-index:-9999;';
+    // Anchor strictly to top-left with absolute positioning, visible z-index for proper rendering
+    container.style.cssText = 'position:absolute;top:0;left:0;width:210mm;z-index:9999;background:#fff;';
 
     const st = document.createElement('style');
     st.textContent = resumeCSS() + `
@@ -1020,7 +1020,9 @@ async function downloadPDF(){
       .r-section{page-break-inside:avoid!important;break-inside:avoid!important;}
       .r-entry{page-break-inside:avoid!important;break-inside:avoid!important;}
       .r-section-title{page-break-after:avoid!important;break-after:avoid!important;}
-      .r-page-inner{width:210mm;padding:${ST.marginV}mm ${ST.marginH}mm;}
+      li, ul{page-break-inside:avoid!important;break-inside:avoid!important;}
+      .tc-wrap, .tc-left, .tc-right{height:auto!important;min-height:auto!important;}
+      .resume-page{min-height:auto!important;height:auto!important;}
     `;
     container.appendChild(st);
 
@@ -1033,11 +1035,13 @@ async function downloadPDF(){
         rightHtml += buildSectionHtml(k, 'twocol');
       });
       const content = document.createElement('div');
+      content.style.cssText = 'width:210mm;height:auto;overflow:visible;display:block;background:#fff;';
       content.innerHTML = tpl.wrapContent(rightHtml, data, hex, rgba(hex,.12), rgba(hex,.4), ST.marginV, ST.marginH, buildTwoColLeft);
       container.appendChild(content);
     } else {
       const content = document.createElement('div');
       content.className = 'r-page-inner';
+      content.style.cssText = `width:210mm;height:auto;overflow:visible;display:block;padding:${ST.marginV}mm ${ST.marginH}mm;background:#fff;`;
       // Header
       let hHtml = tpl.headerHtml(data, hex);
       hHtml = hHtml.replace(/VAR_MVmm/g, ST.marginV+'mm').replace(/VAR_MHmm/g, ST.marginH+'mm');
@@ -1048,7 +1052,7 @@ async function downloadPDF(){
         const html = buildSectionHtml(key, currentTpl);
         if(!html) return;
         const el = document.createElement('div');
-        el.style.cssText = 'page-break-inside:avoid;break-inside:avoid;';
+        el.style.cssText = 'page-break-inside:avoid!important;break-inside:avoid!important;display:block;';
         el.innerHTML = html;
         content.appendChild(el);
       });
@@ -1057,6 +1061,12 @@ async function downloadPDF(){
 
     // Append container to body for rendering (required for html2canvas to capture correctly)
     document.body.appendChild(container);
+    
+    // Wait a moment for the DOM to render and fonts to load before capturing
+    await new Promise(resolve => setTimeout(resolve, 300));
+    if(document.fonts && document.fonts.ready){
+      await document.fonts.ready;
+    }
     
     await html2pdf().set({
       margin: 0,
@@ -1067,8 +1077,12 @@ async function downloadPDF(){
         useCORS: true, 
         letterRendering: true,
         scrollY: 0,
+        scrollX: 0,
         y: 0,
-        x: 0
+        x: 0,
+        windowWidth: 800,
+        windowHeight: 1200,
+        logging: false
       },
       jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait', compress: true, hotfixes: ['px_scaling'] },
       pagebreak: { mode: ['avoid-all', 'css', 'legacy'], before: '.page-break-before', avoid: ['.r-section','.r-entry'] }
