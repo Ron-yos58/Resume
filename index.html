@@ -166,8 +166,10 @@ input:checked+.toggle-track::after{transform:translateX(15px);}
 .r-entry-date{font-size:8.5pt;color:#666;white-space:nowrap;flex-shrink:0;}
 .r-entry-sub{font-size:9pt;color:#444;margin-top:1px;}
 .r-entry-desc{font-size:9pt;color:#555;font-style:italic;margin-top:1px;}
-.r-entry ul{margin:4px 0 0 0;padding-left:16px;}
+.r-entry ul{margin:4px 0 0 0;padding-left:16px;list-style-position:outside;}
 .r-entry li{font-size:9pt;color:#333;margin-bottom:2px;line-height:1.45;}
+.r-section ul{margin:4px 0 0 0;padding-left:16px;list-style-position:outside;}
+.r-section li{font-size:9pt;color:#333;margin-bottom:2px;line-height:1.45;}
 .r-skills-grid{display:flex;flex-wrap:wrap;gap:4px;}
 .r-skill-tag{border-radius:4px;padding:2px 8px;font-size:8pt;font-weight:600;}
 .r-info-list{display:flex;flex-direction:column;gap:3px;}
@@ -599,7 +601,7 @@ function buildSectionHtml(key, tplKey){
     case 'organizations':
       if(!data.organizations.length) return '';
       return `<div class="r-section"><div class="r-section-title" style="${secTitleStyle}">Organizations</div>
-        <ul>${data.organizations.map(o=>`<li style="font-size:9pt;color:#333;">${x(o)}</li>`).join('')}</ul>
+        <ul>${data.organizations.map(o=>`<li>${x(o)}</li>`).join('')}</ul>
       </div>`;
 
     case 'languages':
@@ -670,6 +672,7 @@ function resumeCSS(){
   line-height:${ST.lineHeight}!important;
   color:#111;
   padding:${ST.marginV}mm ${ST.marginH}mm;
+  box-sizing:border-box;
 }
 .r-page-inner *{
   font-family:inherit!important;
@@ -688,8 +691,10 @@ function resumeCSS(){
 .r-entry-date{font-size:8.5pt;color:#666;white-space:nowrap;flex-shrink:0;}
 .r-entry-sub{font-size:9pt;color:#444;margin-top:1px;}
 .r-entry-desc{font-size:9pt;color:#555;font-style:italic;margin-top:1px;}
-.r-entry ul{margin:4px 0 0 0;padding-left:16px;}
+.r-entry ul{margin:4px 0 0 0;padding-left:16px;list-style-position:outside;}
 .r-entry li{font-size:9pt;color:#333;margin-bottom:2px;line-height:${ST.lineHeight};}
+.r-section ul{margin:4px 0 0 0;padding-left:16px;list-style-position:outside;}
+.r-section li{font-size:9pt;color:#333;margin-bottom:2px;line-height:${ST.lineHeight};}
 .r-skills-grid{display:flex;flex-wrap:wrap;gap:4px;}
 .r-skill-tag{border-radius:4px;padding:2px 8px;font-size:8pt;font-weight:600;}
 .r-info-list{display:flex;flex-direction:column;gap:3px;}
@@ -980,7 +985,7 @@ async function downloadPDF(){
       .r-section{page-break-inside:avoid!important;break-inside:avoid!important;}
       .r-entry{page-break-inside:avoid!important;break-inside:avoid!important;}
       .r-section-title{page-break-after:avoid!important;break-after:avoid!important;}
-      .r-page-inner{padding:${ST.marginV}mm ${ST.marginH}mm;}
+      .r-page-inner{width:210mm;padding:${ST.marginV}mm ${ST.marginH}mm;}
     `;
     container.appendChild(st);
 
@@ -1019,8 +1024,8 @@ async function downloadPDF(){
       margin: 0,
       filename: 'Ronald_Sebastian_Resume.pdf',
       image: { type: 'jpeg', quality: 1 },
-      html2canvas: { scale: 3, useCORS: true, letterRendering: true },
-      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait', compress: true },
+      html2canvas: { scale: 2, useCORS: true, letterRendering: true },
+      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait', compress: true, hotfixes: ['px_scaling'] },
       pagebreak: { mode: ['avoid-all', 'css', 'legacy'], before: '.page-break-before', avoid: ['.r-section','.r-entry'] }
     }).from(container).save();
 
