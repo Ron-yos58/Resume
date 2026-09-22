@@ -85,36 +85,59 @@ input:checked+.toggle-track::after{transform:translateX(15px);}
 .subsection-card .card-title{font-size:.77rem;font-weight:700;color:var(--g700);border-bottom:1px solid var(--g200);padding-bottom:5px;display:flex;justify-content:space-between;align-items:center;}
 
 /* MAIN PREVIEW */
-#main{flex:1;overflow:auto;background:#b8bfc8;display:flex;flex-direction:column;align-items:center;padding:28px 20px 48px;}
-#preview-wrapper{display:flex;flex-direction:column;align-items:center;gap:0;transform-origin:top center;transition:transform .2s;}
+#main{flex:1;overflow:auto;background:#b8bfc8;}
+/* Scroll-safe wrapper: preview-wrapper sits inside a flex centering shell.
+   We never touch marginTop/marginBottom on preview-wrapper (that was the scroll bug).
+   Instead we set an explicit height on the outer shell so the scrollable
+   area always starts at the top. */
+#main-inner{
+  display:flex;flex-direction:column;align-items:center;
+  padding:28px 20px 60px;
+  /* min-height matches actual scaled content so scroll doesn't collapse */
+  min-height:100%;
+}
+#preview-wrapper{
+  display:flex;flex-direction:column;align-items:center;gap:0;
+  transform-origin:top center;
+  transition:transform .2s;
+  /* We update this via JS to compensate scaled size */
+}
 
 /* PAGE VISUAL (preview only) */
 .resume-page{
   width:210mm;height:297mm;background:#fff;
   box-shadow:0 4px 28px rgba(0,0,0,.28);
-  overflow:hidden;position:relative;
+  overflow:hidden;position:relative;flex-shrink:0;
+}
+/* Page number footer — sits at the bottom of each page */
+.r-page-num{
+  position:absolute;bottom:4mm;left:0;right:0;
+  text-align:center;
+  font-size:7.5pt;color:#aaa;
+  pointer-events:none;user-select:none;
 }
 /* gap bar between pages — preview only, never in PDF */
 .page-gap{
-  width:210mm;height:22px;background:transparent;
+  width:210mm;height:20px;background:transparent;flex-shrink:0;
   display:flex;align-items:center;justify-content:center;
 }
 .page-gap-label{
-  font-size:.62rem;font-weight:700;color:rgba(255,255,255,.5);
+  font-size:.6rem;font-weight:700;color:rgba(255,255,255,.45);
   letter-spacing:.8px;text-transform:uppercase;
-  background:rgba(0,0,0,.28);padding:2px 10px;border-radius:10px;
+  background:rgba(0,0,0,.25);padding:1px 10px;border-radius:10px;
   pointer-events:none;user-select:none;
 }
 .page-count-footer{
-  margin-top:10px;font-size:.65rem;color:rgba(255,255,255,.4);
-  font-weight:600;letter-spacing:.5px;user-select:none;
+  margin-top:8px;font-size:.63rem;color:rgba(255,255,255,.38);
+  font-weight:600;letter-spacing:.5px;user-select:none;flex-shrink:0;
 }
 
 /* RESUME TYPOGRAPHY (shared across templates) */
+/* font-family, font-size, line-height are set dynamically via resumeCSS()
+   injected inside each .resume-page — do NOT hardcode them here */
 .r-page-inner{
   width:210mm;
-  font-family:'Times New Roman',Times,serif;
-  font-size:10pt;line-height:1.45;color:#111;
+  color:#111;
 }
 .r-name{font-size:22pt;font-weight:700;letter-spacing:-.5px;line-height:1.1;}
 .r-contact{display:flex;flex-wrap:wrap;gap:4px 14px;margin-top:6px;font-size:8.5pt;color:#555;}
@@ -208,6 +231,9 @@ input:checked+.toggle-track::after{transform:translateX(15px);}
       <option value="executive">Executive</option>
       <option value="minimal">Minimal</option>
       <option value="twocol">Two-Column</option>
+      <option value="compact">Compact Pro</option>
+      <option value="lineaccent">Line Accent</option>
+      <option value="banner">Banner</option>
     </select>
   </div>
   <div class="tb-sep"></div>
@@ -264,13 +290,23 @@ input:checked+.toggle-track::after{transform:translateX(15px);}
             <div class="sp-group"><label>Top/Bottom (mm)</label><input type="number" id="margin-v" value="14" min="5" max="30"/></div>
             <div class="sp-group"><label>Left/Right (mm)</label><input type="number" id="margin-h" value="16" min="5" max="30"/></div>
           </div>
+          <div class="sp-divider"></div>
+          <div class="sp-group" style="display:flex;align-items:center;justify-content:space-between;">
+            <label style="margin-bottom:0;">Page Numbers</label>
+            <label class="toggle-switch" style="flex-shrink:0;">
+              <input type="checkbox" id="pagenum-toggle" checked/>
+              <span class="toggle-track"></span>
+            </label>
+          </div>
         </div>
       </div>
     </div>
   </div>
 
   <div id="main">
-    <div id="preview-wrapper"></div>
+    <div id="main-inner">
+      <div id="preview-wrapper"></div>
+    </div>
   </div>
 </div>
 
@@ -312,7 +348,7 @@ const DEFAULT_DATA = {
      bullets:["Employee personal data entry","Assisting in making employee master data","Alignment of BPJS allowance data","Data entry for teaching decision letters for lecturers","Help designing poster and banner for training","Edit POD and IKA with new changes from LPM"]}
   ],
   skills:["Python","PostgreSQL","JavaScript","HTML5","CSS","Tailwind CSS","Bootstrap","PHP","Visual Basic","Google Apps Script","Git","GitHub","Docker","IBM SPSS Statistics","Rapid Miner","Star UML","Arduino","Microsoft Word","Microsoft Excel","Microsoft PowerPoint","Google Docs","Google Sheets","Google Slides","Photoshop","Illustrator","Lightroom","InDesign","After Effects","Premiere Pro"],
-  languages:[{name:"Indonesian",level:5},{name:"English",level:3}],
+  languages:[{name:"Indonesian",proficiency:"Native"},{name:"English",proficiency:"Intermediate"}],
   courses:[
     {name:"Applied Intermediate Skills in Microsoft Excel",issuer:"McGraw Hill",date:"August 2026"},
     {name:"Pengajar Tersertifikasi Gemini",issuer:"Google Gemini",date:"August 2026"},
@@ -372,7 +408,6 @@ const TEMPLATES = {
     sectionTitleStyle:(hex)=>`color:${hex};border-bottom:1.5px solid ${hex};`,
     entryTitleStyle:()=>`color:#111;`,
     skillTagStyle:(hex,light,border)=>`background:${light};color:${hex};border:1px solid ${border};`,
-    langStarColor:(hex)=>hex,
     wrapContent:(inner)=>inner,
   },
   modern:{
@@ -393,7 +428,6 @@ const TEMPLATES = {
     sectionTitleStyle:(hex)=>`color:#fff;background:${hex};padding:2px 8px;border-radius:3px;border-bottom:none;display:inline-block;`,
     entryTitleStyle:(hex)=>`color:${hex};`,
     skillTagStyle:(hex,light,border)=>`background:${light};color:${hex};border:1px solid ${border};`,
-    langStarColor:(hex)=>hex,
     wrapContent:(inner)=>inner,
   },
   executive:{
@@ -413,7 +447,6 @@ const TEMPLATES = {
     sectionTitleStyle:(hex)=>`color:${hex};border-bottom:2px solid ${hex};`,
     entryTitleStyle:()=>`color:#111;`,
     skillTagStyle:(hex,light,border)=>`background:${light};color:${hex};border:1px solid ${border};`,
-    langStarColor:(hex)=>hex,
     wrapContent:(inner)=>inner,
   },
   minimal:{
@@ -433,7 +466,6 @@ const TEMPLATES = {
     sectionTitleStyle:(hex)=>`color:#111;border-bottom:none;border-left:3px solid ${hex};padding-left:7px;font-size:9.5pt;`,
     entryTitleStyle:()=>`color:#111;`,
     skillTagStyle:()=>`background:#f3f4f6;color:#374151;border:1px solid #d1d5db;`,
-    langStarColor:(hex)=>hex,
     wrapContent:(inner)=>inner,
   },
   twocol:{
@@ -441,7 +473,6 @@ const TEMPLATES = {
     sectionTitleStyle:(hex)=>`color:${hex};border-bottom:1.5px solid ${hex};`,
     entryTitleStyle:()=>`color:#111;`,
     skillTagStyle:(hex,light,border)=>`background:${light};color:${hex};border:1px solid ${border};`,
-    langStarColor:(hex)=>hex,
     wrapContent:(inner,d,hex,light,border,mv,mh,buildLeftCol)=>{
       return `<div class="tc-wrap">
         <div class="tc-left" style="background:${hex};width:68mm;padding:${mv}mm 7mm;flex-shrink:0;">
@@ -461,7 +492,7 @@ const TEMPLATES = {
 let data        = JSON.parse(JSON.stringify(DEFAULT_DATA));
 let sectionOrder= SECTION_META.map(s=>s.key);
 let sectionVis  = Object.fromEntries(SECTION_META.map(s=>[s.key,true]));
-let ST = {accent:"#1a56db",font:"'Times New Roman',Times,serif",fontSize:10,lineHeight:1.45,marginV:14,marginH:16};
+let ST = {accent:"#1a56db",font:"'Times New Roman',Times,serif",fontSize:10,lineHeight:1.45,marginV:14,marginH:16,showPageNums:true};
 let currentTpl  = 'classic';
 
 (function(){
@@ -494,7 +525,6 @@ function buildSectionHtml(key, tplKey){
   const secTitleStyle = tpl.sectionTitleStyle(hex,light,bord);
   const entStyle      = tpl.entryTitleStyle ? tpl.entryTitleStyle(hex) : `color:#111;`;
   const skillStyle    = tpl.skillTagStyle(hex,light,bord);
-  const starColor     = tpl.langStarColor(hex);
 
   switch(key){
     case 'summary':
@@ -578,7 +608,7 @@ function buildSectionHtml(key, tplKey){
         <div class="r-lang-list">${data.languages.map(l=>`
           <div class="r-lang-row">
             <span class="r-lang-name">${x(l.name)}</span>
-            <span style="color:${starColor};letter-spacing:1px;">${'★'.repeat(l.level)+'☆'.repeat(5-l.level)}</span>
+            <span class="r-lang-badge" style="background:${rgba(hex,.1)};color:${hex};border:1px solid ${rgba(hex,.3)};padding:1px 7px;border-radius:3px;font-size:7.5pt;font-weight:600;">${x(l.proficiency||'')}</span>
           </div>`).join('')}
         </div></div>`;
 
@@ -612,7 +642,7 @@ function buildTwoColLeft(d,hex){
   }
   if(d.languages.length&&sectionVis['languages']){
     h+=`<div class="tc-section-title">Languages</div><div class="r-lang-list">`;
-    d.languages.forEach(l=>{h+=`<div class="r-lang-row"><span style="color:#fff;font-weight:600;font-size:8pt;">${x(l.name)}</span><span style="color:#fff;font-size:9pt;">${'★'.repeat(l.level)+'☆'.repeat(5-l.level)}</span></div>`;});
+    d.languages.forEach(l=>{h+=`<div class="r-lang-row"><span style="color:#fff;font-weight:600;font-size:8pt;">${x(l.name)}</span><span style="background:rgba(255,255,255,.2);color:#fff;border:1px solid rgba(255,255,255,.35);padding:1px 7px;border-radius:3px;font-size:7pt;font-weight:600;">${x(l.proficiency||'')}</span></div>`;});
     h+='</div>';
   }
   if(sectionVis['personalInfo']){
@@ -633,13 +663,23 @@ function resumeCSS(){
   const hex=ST.accent, light=rgba(hex,.12), bord=rgba(hex,.4);
   return `
 *{box-sizing:border-box;}
-.r-page-inner{width:210mm;font-family:${ST.font};font-size:${ST.fontSize}pt;line-height:${ST.lineHeight};color:#111;padding:${ST.marginV}mm ${ST.marginH}mm;}
+.r-page-inner{
+  width:210mm;
+  font-family:${ST.font}!important;
+  font-size:${ST.fontSize}pt!important;
+  line-height:${ST.lineHeight}!important;
+  color:#111;
+  padding:${ST.marginV}mm ${ST.marginH}mm;
+}
+.r-page-inner *{
+  font-family:inherit!important;
+}
 .r-name{font-size:22pt;font-weight:700;letter-spacing:-.5px;line-height:1.1;}
 .r-contact{display:flex;flex-wrap:wrap;gap:4px 14px;margin-top:6px;font-size:8.5pt;color:#555;}
 .r-contact span{display:flex;align-items:center;gap:3px;}
 .r-contact a{color:inherit;text-decoration:none;}
 .r-divider{height:2px;margin:8px 0;}
-.r-summary{font-size:9.5pt;color:#333;margin-bottom:10px;text-align:justify;line-height:1.5;}
+.r-summary{font-size:9.5pt;color:#333;margin-bottom:10px;text-align:justify;line-height:${ST.lineHeight};}
 .r-section{margin-bottom:10px;page-break-inside:avoid;break-inside:avoid;}
 .r-section-title{font-size:10.5pt;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;padding-bottom:2px;margin-bottom:7px;page-break-after:avoid;break-after:avoid;}
 .r-entry{margin-bottom:8px;page-break-inside:avoid;break-inside:avoid;}
@@ -649,7 +689,7 @@ function resumeCSS(){
 .r-entry-sub{font-size:9pt;color:#444;margin-top:1px;}
 .r-entry-desc{font-size:9pt;color:#555;font-style:italic;margin-top:1px;}
 .r-entry ul{margin:4px 0 0 0;padding-left:16px;}
-.r-entry li{font-size:9pt;color:#333;margin-bottom:2px;line-height:1.45;}
+.r-entry li{font-size:9pt;color:#333;margin-bottom:2px;line-height:${ST.lineHeight};}
 .r-skills-grid{display:flex;flex-wrap:wrap;gap:4px;}
 .r-skill-tag{border-radius:4px;padding:2px 8px;font-size:8pt;font-weight:600;}
 .r-info-list{display:flex;flex-direction:column;gap:3px;}
@@ -670,6 +710,7 @@ function resumeCSS(){
 .tc-info-row{font-size:7.5pt;color:rgba(255,255,255,.85);margin-bottom:3px;}
 .tc-info-label{font-weight:700;display:block;color:rgba(255,255,255,.6);}
 .r-exec-header{background:${hex};padding:10mm ${ST.marginH}mm 8mm;margin:-${ST.marginV}mm -${ST.marginH}mm 12px;}
+.r-page-num{position:absolute;bottom:4mm;left:0;right:0;text-align:center;font-size:7.5pt;color:#aaa;}
   `;
 }
 
@@ -812,18 +853,28 @@ function renderPages(){
   const heights = measureBlocks(blocks);
   const pages = paginateBlocks(heights, tplKey);
   const numPages = pages.length;
+  const showNums = ST.showPageNums !== false;
 
-  // Two-column: render as a single page box (full height content)
+  // Helper: create a page-number label element
+  function makePageNum(pi){
+    const el = document.createElement('div');
+    el.className = 'r-page-num';
+    el.textContent = numPages > 1 ? `${pi + 1} / ${numPages}` : '';
+    return el;
+  }
+
+  // Two-column: render as a single page box
   if(tplKey === 'twocol'){
     const page = document.createElement('div');
     page.className = 'resume-page';
-    page.style.height = 'auto'; // let content determine height
+    page.style.height = 'auto';
     page.style.minHeight = '297mm';
     const st = document.createElement('style');
     st.textContent = resumeCSS();
     page.appendChild(st);
     const inner = blocks[0].cloneNode(true);
     page.appendChild(inner);
+    if(showNums && numPages > 1) page.appendChild(makePageNum(0));
     wrapper.appendChild(page);
     setTimeout(()=>applyZoom(parseInt(zoomRange.value)),80);
     return;
@@ -840,12 +891,22 @@ function renderPages(){
 
     const inner = document.createElement('div');
     inner.className = 'r-page-inner';
+    // Reserve bottom space for page number if enabled and multi-page
+    if(showNums && numPages > 1){
+      inner.style.paddingBottom = `${ST.marginV + 5}mm`;
+    }
 
     pages[pi].forEach(bi => {
       inner.appendChild(blocks[bi].cloneNode(true));
     });
 
     pageEl.appendChild(inner);
+
+    // Page number — appended directly to page (absolute positioned)
+    if(showNums && numPages > 1){
+      pageEl.appendChild(makePageNum(pi));
+    }
+
     wrapper.appendChild(pageEl);
 
     // Gap between pages (preview-only)
@@ -872,21 +933,30 @@ function renderPages(){
 }
 
 // ─────────────────────────────────────────────────────────────
-// ZOOM
+// ZOOM  — scroll-safe implementation
+// The wrapper is scaled from top-center. After scaling, its
+// layout box still occupies the ORIGINAL size, so scroll works
+// normally to the top. We just need to make sure #main-inner
+// is tall enough to not clip the bottom of scaled content.
 // ─────────────────────────────────────────────────────────────
 const zoomRange = document.getElementById('zoom-range');
 const zoomVal   = document.getElementById('zoom-val');
 const previewWrapper = document.getElementById('preview-wrapper');
 
 function applyZoom(v){
-  previewWrapper.style.transform = `scale(${v/100})`;
+  const scale = v / 100;
+  previewWrapper.style.transform = `scale(${scale})`;
   zoomVal.textContent = v + '%';
-  // Compensate wrapper height so scrolling works
-  const natural = previewWrapper.getBoundingClientRect().height / (v/100);
-  const scaled  = natural * (v/100);
-  const delta   = natural - scaled;
-  previewWrapper.style.marginTop    = (-delta/2) + 'px';
-  previewWrapper.style.marginBottom = (-delta/2) + 'px';
+  // After scaling, the wrapper's layout height stays at natural size.
+  // When scale < 1 the bottom gets clipped by the scroll container,
+  // so we pad #main-inner enough to accommodate the scaled height.
+  requestAnimationFrame(() => {
+    const naturalH = previewWrapper.offsetHeight;       // unscaled layout height
+    const scaledH  = naturalH * scale;                  // visible height after scale
+    const mainInner = document.getElementById('main-inner');
+    // Set min-height so the scroll area is always correct
+    mainInner.style.minHeight = (scaledH + 88) + 'px';
+  });
 }
 zoomRange.addEventListener('input', () => applyZoom(parseInt(zoomRange.value)));
 
@@ -1044,13 +1114,43 @@ function initStylePanel(){
   document.getElementById('margin-h').value      = ST.marginH;
 
   document.getElementById('color-picker').addEventListener('input', e=>{ ST.accent=e.target.value; document.querySelectorAll('.color-dot').forEach(d=>d.classList.remove('active')); renderPages(); persist(); });
-  ['font-select','font-size','line-height','margin-v','margin-h'].forEach(id=>{
+
+  // Font-family has its own handler so we can auto-adjust line-height
+  // Sans-serif fonts (Arial, Calibri, Trebuchet) have taller x-heights than
+  // serif fonts — 1.45 line-height for Times looks like 1.6+ for Arial.
+  // We nudge the default line-height down for sans fonts automatically,
+  // but only if the user hasn't manually changed it from the last auto value.
+  const FONT_LH = {
+    "'Times New Roman',Times,serif": 1.45,
+    "Georgia,serif":                 1.45,
+    "Arial,Helvetica,sans-serif":    1.30,
+    "Calibri,sans-serif":            1.30,
+    "'Trebuchet MS',sans-serif":     1.32,
+  };
+  let _lastAutoLH = FONT_LH[ST.font] || 1.45; // track last auto-set value
+
+  document.getElementById('font-select').addEventListener('change', ()=>{
+    ST.font = document.getElementById('font-select').value;
+    // Only auto-adjust line-height if user hasn't deviated from auto values
+    const currentLH = parseFloat(document.getElementById('line-height').value);
+    const autoLH    = FONT_LH[ST.font] || 1.40;
+    // Snap to new auto value if user is still on an auto value
+    if(Math.abs(currentLH - _lastAutoLH) < 0.01){
+      ST.lineHeight = autoLH;
+      document.getElementById('line-height').value = autoLH;
+      _lastAutoLH = autoLH;
+    } else {
+      ST.lineHeight = currentLH;
+    }
+    renderPages(); persist();
+  });
+
+  ['font-size','line-height','margin-v','margin-h'].forEach(id=>{
     document.getElementById(id).addEventListener('change', ()=>{
-      ST.font     = document.getElementById('font-select').value;
-      ST.fontSize = parseFloat(document.getElementById('font-size').value);
-      ST.lineHeight= parseFloat(document.getElementById('line-height').value);
-      ST.marginV  = parseFloat(document.getElementById('margin-v').value);
-      ST.marginH  = parseFloat(document.getElementById('margin-h').value);
+      ST.fontSize   = parseFloat(document.getElementById('font-size').value);
+      ST.lineHeight = parseFloat(document.getElementById('line-height').value);
+      ST.marginV    = parseFloat(document.getElementById('margin-v').value);
+      ST.marginH    = parseFloat(document.getElementById('margin-h').value);
       renderPages(); persist();
     });
   });
@@ -1200,6 +1300,7 @@ function buildSkillsEd(){
   render(); return w;
 }
 function buildLangsEd(){
+  const LEVELS = ['Native','Fluent','Advanced','Upper-Intermediate','Intermediate','Elementary','Beginner'];
   const w=document.createElement('div'); w.style.cssText='display:flex;flex-direction:column;gap:5px;';
   function render(){
     w.innerHTML='';
@@ -1207,14 +1308,15 @@ function buildLangsEd(){
       const row=document.createElement('div'); row.style.cssText='display:flex;gap:5px;align-items:center;';
       const ni=document.createElement('input'); ni.value=lang.name; ni.placeholder='Language'; ni.style.cssText='flex:1;padding:5px 8px;border-radius:6px;border:1px solid var(--g300);font-size:.78rem;';
       ni.addEventListener('input',()=>{ lang.name=ni.value; renderPages(); persist(); });
-      const li=document.createElement('input'); li.type='number'; li.value=lang.level; li.min=1; li.max=5; li.style.cssText='width:50px;padding:5px 7px;border-radius:6px;border:1px solid var(--g300);font-size:.78rem;'; li.title='1–5 stars';
-      li.addEventListener('input',()=>{ lang.level=parseInt(li.value)||1; renderPages(); persist(); });
+      const sel=document.createElement('select'); sel.style.cssText='width:130px;padding:5px 7px;border-radius:6px;border:1px solid var(--g300);font-size:.75rem;font-family:var(--ui);background:#fff;color:var(--g800);';
+      LEVELS.forEach(lv=>{ const opt=document.createElement('option'); opt.value=lv; opt.textContent=lv; if((lang.proficiency||'')===lv) opt.selected=true; sel.appendChild(opt); });
+      sel.addEventListener('change',()=>{ lang.proficiency=sel.value; renderPages(); persist(); });
       const rm=document.createElement('button'); rm.className='btn-rm'; rm.textContent='✕';
       rm.addEventListener('click',()=>{ data.languages.splice(i,1); render(); renderPages(); persist(); });
-      row.appendChild(ni); row.appendChild(li); row.appendChild(rm); w.appendChild(row);
+      row.appendChild(ni); row.appendChild(sel); row.appendChild(rm); w.appendChild(row);
     });
     const a=document.createElement('button'); a.className='btn-add'; a.textContent='+ Add Language';
-    a.addEventListener('click',()=>{ data.languages.push({name:'',level:3}); render(); renderPages(); persist(); });
+    a.addEventListener('click',()=>{ data.languages.push({name:'',proficiency:'Intermediate'}); render(); renderPages(); persist(); });
     w.appendChild(a);
   }
   render(); return w;
