@@ -105,9 +105,9 @@ input:checked+.toggle-track::after{transform:translateX(15px);}
 
 /* PAGE VISUAL (preview only) */
 .resume-page{
-  width:210mm;height:297mm;background:#fff;
+  width:210mm;min-height:297mm;background:#fff;
   box-shadow:0 4px 28px rgba(0,0,0,.28);
-  overflow:hidden;position:relative;flex-shrink:0;
+  position:relative;flex-shrink:0;overflow:visible;
 }
 /* Page number footer — sits at the bottom of each page */
 .r-page-num{
@@ -154,7 +154,7 @@ input:checked+.toggle-track::after{transform:translateX(15px);}
 .r-section-title{
   font-size:10.5pt;font-weight:700;text-transform:uppercase;
   letter-spacing:1.5px;padding-bottom:2px;margin-bottom:7px;
-  page-break-after:avoid;break-after:avoid;
+  page-break-after:avoid;break-after:avoid;page-break-inside:avoid;break-inside:avoid;
 }
 .r-entry{
   margin-bottom:8px;
@@ -162,14 +162,14 @@ input:checked+.toggle-track::after{transform:translateX(15px);}
   break-inside:avoid;
 }
 .r-entry-head{display:flex;justify-content:space-between;align-items:baseline;gap:8px;}
-.r-entry-title{font-weight:700;font-size:9.5pt;color:#111;}
+.r-entry-title{font-weight:700;font-size:9.5pt;color:#111;page-break-after:avoid;break-after:avoid;}
 .r-entry-date{font-size:8.5pt;color:#666;white-space:nowrap;flex-shrink:0;}
 .r-entry-sub{font-size:9pt;color:#444;margin-top:1px;}
 .r-entry-desc{font-size:9pt;color:#555;font-style:italic;margin-top:1px;}
 .r-entry ul{margin:4px 0 0 0;padding-left:16px;list-style-position:outside;}
-.r-entry li{font-size:9pt;color:#333;margin-bottom:2px;line-height:1.45;}
+.r-entry li{font-size:9pt;color:#333;margin-bottom:2px;line-height:1.45;page-break-inside:avoid;break-inside:avoid;break-after:avoid;}
 .r-section ul{margin:4px 0 0 0;padding-left:16px;list-style-position:outside;}
-.r-section li{font-size:9pt;color:#333;margin-bottom:2px;line-height:1.45;}
+.r-section li{font-size:9pt;color:#333;margin-bottom:2px;line-height:1.45;page-break-inside:avoid;break-inside:avoid;break-after:avoid;}
 .r-skills-grid{display:flex;flex-wrap:wrap;gap:4px;}
 .r-skill-tag{border-radius:4px;padding:2px 8px;font-size:8pt;font-weight:600;}
 .r-info-list{display:flex;flex-direction:column;gap:3px;}
@@ -185,20 +185,21 @@ input:checked+.toggle-track::after{transform:translateX(15px);}
 .r-course-date{color:#888;white-space:nowrap;flex-shrink:0;}
 
 /* two-column template */
-.tc-wrap{display:flex;min-height:297mm;}
-.tc-left{width:68mm;padding:14mm 7mm;flex-shrink:0;}
-.tc-right{flex:1;padding:14mm 14mm 14mm 10mm;}
+.tc-wrap{display:flex;min-height:297mm;break-inside:auto;}
+.tc-left{width:68mm;padding:14mm 7mm;flex-shrink:0;break-inside:auto;}
+.tc-right{flex:1;padding:14mm 14mm 14mm 10mm;break-inside:auto;}
 .tc-section-title{font-size:9pt;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;border-bottom:1px solid rgba(255,255,255,.4);padding-bottom:3px;margin:10px 0 6px;color:#fff;}
 .tc-info-row{font-size:7.5pt;color:rgba(255,255,255,.85);margin-bottom:3px;}
 .tc-info-label{font-weight:700;display:block;color:rgba(255,255,255,.6);}
 
 /* PRINT */
 @media print{
+  @page{margin:15mm;}
   body{background:#fff;}
   #topbar,#sidebar{display:none!important;}
   #main{padding:0;background:#fff;}
   #preview-wrapper{transform:none!important;}
-  .resume-page{box-shadow:none;}
+  .resume-page{box-shadow:none;height:auto;min-height:297mm;}
   .page-gap,.page-gap-label,.page-count-footer{display:none!important;}
 }
 
@@ -684,17 +685,17 @@ function resumeCSS(){
 .r-divider{height:2px;margin:8px 0;}
 .r-summary{font-size:9.5pt;color:#333;margin-bottom:10px;text-align:justify;line-height:${ST.lineHeight};}
 .r-section{margin-bottom:10px;page-break-inside:avoid;break-inside:avoid;}
-.r-section-title{font-size:10.5pt;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;padding-bottom:2px;margin-bottom:7px;page-break-after:avoid;break-after:avoid;}
+.r-section-title{font-size:10.5pt;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;padding-bottom:2px;margin-bottom:7px;page-break-after:avoid;break-after:avoid;page-break-inside:avoid;break-inside:avoid;}
 .r-entry{margin-bottom:8px;page-break-inside:avoid;break-inside:avoid;}
 .r-entry-head{display:flex;justify-content:space-between;align-items:baseline;gap:8px;}
-.r-entry-title{font-weight:700;font-size:9.5pt;}
+.r-entry-title{font-weight:700;font-size:9.5pt;page-break-after:avoid;break-after:avoid;}
 .r-entry-date{font-size:8.5pt;color:#666;white-space:nowrap;flex-shrink:0;}
 .r-entry-sub{font-size:9pt;color:#444;margin-top:1px;}
 .r-entry-desc{font-size:9pt;color:#555;font-style:italic;margin-top:1px;}
 .r-entry ul{margin:4px 0 0 0;padding-left:16px;list-style-position:outside;}
-.r-entry li{font-size:9pt;color:#333;margin-bottom:2px;line-height:${ST.lineHeight};}
+.r-entry li{font-size:9pt;color:#333;margin-bottom:2px;line-height:${ST.lineHeight};page-break-inside:avoid;break-inside:avoid;break-after:avoid;}
 .r-section ul{margin:4px 0 0 0;padding-left:16px;list-style-position:outside;}
-.r-section li{font-size:9pt;color:#333;margin-bottom:2px;line-height:${ST.lineHeight};}
+.r-section li{font-size:9pt;color:#333;margin-bottom:2px;line-height:${ST.lineHeight};page-break-inside:avoid;break-inside:avoid;break-after:avoid;}
 .r-skills-grid{display:flex;flex-wrap:wrap;gap:4px;}
 .r-skill-tag{border-radius:4px;padding:2px 8px;font-size:8pt;font-weight:600;}
 .r-info-list{display:flex;flex-direction:column;gap:3px;}
@@ -708,9 +709,9 @@ function resumeCSS(){
 .r-course-row{display:flex;justify-content:space-between;gap:8px;font-size:8.5pt;}
 .r-course-name{color:#333;flex:1;}
 .r-course-date{color:#888;white-space:nowrap;flex-shrink:0;}
-.tc-wrap{display:flex;}
-.tc-left{width:68mm;flex-shrink:0;}
-.tc-right{flex:1;}
+.tc-wrap{display:flex;break-inside:auto;}
+.tc-left{width:68mm;flex-shrink:0;break-inside:auto;}
+.tc-right{flex:1;break-inside:auto;}
 .tc-section-title{font-size:9pt;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;border-bottom:1px solid rgba(255,255,255,.4);padding-bottom:3px;margin:10px 0 6px;color:#fff;}
 .tc-info-row{font-size:7.5pt;color:rgba(255,255,255,.85);margin-bottom:3px;}
 .tc-info-label{font-weight:700;display:block;color:rgba(255,255,255,.6);}
