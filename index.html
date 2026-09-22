@@ -138,6 +138,10 @@ input:checked+.toggle-track::after{transform:translateX(15px);}
 .r-page-inner{
   width:210mm;
   color:#111;
+  /* Allow natural multi-page flow - no fixed heights */
+  height:auto!important;
+  min-height:auto!important;
+  overflow:visible!important;
 }
 .r-name{font-size:22pt;font-weight:700;letter-spacing:-.5px;line-height:1.1;}
 .r-contact{display:flex;flex-wrap:wrap;gap:4px 14px;margin-top:6px;font-size:8.5pt;color:#555;}
@@ -185,9 +189,9 @@ input:checked+.toggle-track::after{transform:translateX(15px);}
 .r-course-date{color:#888;white-space:nowrap;flex-shrink:0;}
 
 /* two-column template */
-.tc-wrap{display:flex;min-height:297mm;break-inside:auto;}
-.tc-left{width:68mm;padding:14mm 7mm;flex-shrink:0;break-inside:auto;}
-.tc-right{flex:1;padding:14mm 14mm 14mm 10mm;break-inside:auto;}
+.tc-wrap{display:flex;min-height:297mm;break-inside:auto;height:auto!important;}
+.tc-left{width:68mm;padding:14mm 7mm;flex-shrink:0;break-inside:auto;height:auto!important;}
+.tc-right{flex:1;padding:14mm 14mm 14mm 10mm;break-inside:auto;height:auto!important;}
 .tc-section-title{font-size:9pt;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;border-bottom:1px solid rgba(255,255,255,.4);padding-bottom:3px;margin:10px 0 6px;color:#fff;}
 .tc-info-row{font-size:7.5pt;color:rgba(255,255,255,.85);margin-bottom:3px;}
 .tc-info-label{font-weight:700;display:block;color:rgba(255,255,255,.6);}
@@ -201,6 +205,16 @@ input:checked+.toggle-track::after{transform:translateX(15px);}
   #preview-wrapper{transform:none!important;}
   .resume-page{box-shadow:none;height:auto;min-height:297mm;}
   .page-gap,.page-gap-label,.page-count-footer{display:none!important;}
+  /* Prevent content splitting across pages */
+  li, ul, .r-section, .r-entry, .tc-wrap, .tc-left, .tc-right{
+    page-break-inside:avoid!important;
+    break-inside:avoid!important;
+  }
+  /* Prevent orphaned headers */
+  h1, h2, h3, h4, .r-name, .r-section-title, .r-entry-title, .tc-section-title{
+    page-break-after:avoid!important;
+    break-after:avoid!important;
+  }
 }
 
 /* SCROLLBAR */
@@ -678,6 +692,22 @@ function resumeCSS(){
 .r-page-inner *{
   font-family:inherit!important;
 }
+/* Prevent content splitting across pages */
+li, ul, .r-section, .r-entry, .tc-wrap, .tc-left, .tc-right{
+  page-break-inside:avoid!important;
+  break-inside:avoid!important;
+}
+/* Prevent orphaned headers */
+h1, h2, h3, h4, .r-name, .r-section-title, .r-entry-title, .tc-section-title{
+  page-break-after:avoid!important;
+  break-after:avoid!important;
+}
+/* Remove fixed heights to allow natural flow */
+.r-page-inner, .resume-page, .tc-wrap{
+  height:auto!important;
+  min-height:auto!important;
+  overflow:visible!important;
+}
 .r-name{font-size:22pt;font-weight:700;letter-spacing:-.5px;line-height:1.1;}
 .r-contact{display:flex;flex-wrap:wrap;gap:4px 14px;margin-top:6px;font-size:8.5pt;color:#555;}
 .r-contact span{display:flex;align-items:center;gap:3px;}
@@ -709,9 +739,9 @@ function resumeCSS(){
 .r-course-row{display:flex;justify-content:space-between;gap:8px;font-size:8.5pt;}
 .r-course-name{color:#333;flex:1;}
 .r-course-date{color:#888;white-space:nowrap;flex-shrink:0;}
-.tc-wrap{display:flex;break-inside:auto;}
-.tc-left{width:68mm;flex-shrink:0;break-inside:auto;}
-.tc-right{flex:1;break-inside:auto;}
+.tc-wrap{display:flex;break-inside:auto;height:auto!important;}
+.tc-left{width:68mm;flex-shrink:0;break-inside:auto;height:auto!important;}
+.tc-right{flex:1;break-inside:auto;height:auto!important;}
 .tc-section-title{font-size:9pt;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;border-bottom:1px solid rgba(255,255,255,.4);padding-bottom:3px;margin:10px 0 6px;color:#fff;}
 .tc-info-row{font-size:7.5pt;color:rgba(255,255,255,.85);margin-bottom:3px;}
 .tc-info-label{font-weight:700;display:block;color:rgba(255,255,255,.6);}
@@ -973,12 +1003,16 @@ async function downloadPDF(){
   const loading = document.getElementById('pdf-loading');
   loading.classList.add('show');
   try{
+    // Scroll to top to ensure clean capture
+    window.scrollTo(0, 0);
+    
     const tpl = TEMPLATES[currentTpl] || TEMPLATES.classic;
     const hex = ST.accent;
 
     // Build a clean, standalone container — NO page-gap labels, NO UI elements
     const container = document.createElement('div');
-    container.style.cssText = 'width:210mm;';
+    // Anchor strictly to top-left with absolute positioning to prevent scroll offset issues
+    container.style.cssText = 'position:absolute;top:0;left:0;width:210mm;z-index:-9999;';
 
     const st = document.createElement('style');
     st.textContent = resumeCSS() + `
@@ -1021,14 +1055,27 @@ async function downloadPDF(){
       container.appendChild(content);
     }
 
+    // Append container to body for rendering (required for html2canvas to capture correctly)
+    document.body.appendChild(container);
+    
     await html2pdf().set({
       margin: 0,
       filename: 'Ronald_Sebastian_Resume.pdf',
       image: { type: 'jpeg', quality: 1 },
-      html2canvas: { scale: 2, useCORS: true, letterRendering: true },
+      html2canvas: { 
+        scale: 2, 
+        useCORS: true, 
+        letterRendering: true,
+        scrollY: 0,
+        y: 0,
+        x: 0
+      },
       jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait', compress: true, hotfixes: ['px_scaling'] },
       pagebreak: { mode: ['avoid-all', 'css', 'legacy'], before: '.page-break-before', avoid: ['.r-section','.r-entry'] }
-    }).from(container).save();
+    }).from(container).toPdf().then(() => {
+      // Clean up: remove the temporary container after PDF generation
+      document.body.removeChild(container);
+    }).save();
 
     notify('PDF downloaded!');
   } catch(err){
