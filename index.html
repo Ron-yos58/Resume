@@ -5,162 +5,267 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
 <title>Resume Editor – Ronald Sebastian</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
 <style>
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+/* ── DESIGN TOKENS ── */
 :root{
-  --accent:#1a56db;--accent-dark:#1040b0;--accent-light:#e8f0fe;
-  --g50:#f9fafb;--g100:#f3f4f6;--g200:#e5e7eb;--g300:#d1d5db;
-  --g400:#9ca3af;--g500:#6b7280;--g600:#4b5563;--g700:#374151;--g800:#1f2937;
-  --sw:340px;--ui:'Inter',system-ui,sans-serif;
+  --primary:#004ac6;
+  --primary-container:#2563eb;
+  --primary-fixed:#dbe1ff;
+  --primary-fixed-dim:#b4c5ff;
+  --on-primary:#fff;
+  --accent-focus:#1D4ED8;
+  --accent-soft:#EFF6FF;
+  --surface:#f8f9ff;
+  --surface-sheet:#fff;
+  --surface-container-lowest:#fff;
+  --surface-container-low:#eff4ff;
+  --surface-container:#e5eeff;
+  --surface-container-high:#dce9ff;
+  --surface-bright:#f8f9ff;
+  --canvas-bg:#F1F5F9;
+  --sidebar-bg:#fff;
+  --on-surface:#0b1c30;
+  --on-background:#0b1c30;
+  --on-surface-variant:#434655;
+  --text-primary:#0F172A;
+  --text-muted:#64748B;
+  --border-subtle:#E2E8F0;
+  --border-strong:#CBD5E1;
+  --outline:#737686;
+  --outline-variant:#c3c6d7;
+  --success:#10B981;
+  --error:#ba1a1a;
+  --warning:#F59E0B;
+  --inverse-surface:#213145;
+  --sw:320px;
+  --topbar-h:56px;
 }
-html{font-size:14px;}
-body{font-family:var(--ui);background:#b8bfc8;color:var(--g800);min-height:100vh;display:flex;flex-direction:column;}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html{font-size:13px;}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--canvas-bg);color:var(--text-primary);min-height:100vh;display:flex;flex-direction:column;-webkit-font-smoothing:antialiased;}
 
-/* TOPBAR */
+/* ── MATERIAL SYMBOLS ── */
+.ms{font-family:'Material Symbols Outlined';font-weight:normal;font-style:normal;line-height:1;letter-spacing:normal;text-transform:none;display:inline-block;white-space:nowrap;word-wrap:normal;direction:ltr;font-size:18px;vertical-align:middle;user-select:none;}
+
+/* ── TOPBAR ── */
 #topbar{
-  position:sticky;top:0;z-index:100;display:flex;align-items:center;gap:8px;flex-wrap:wrap;
-  background:#fff;border-bottom:1px solid var(--g200);padding:8px 16px;min-height:52px;
+  position:sticky;top:0;z-index:100;
+  height:var(--topbar-h);
+  display:flex;align-items:center;gap:8px;
+  background:var(--surface-sheet);
+  border-bottom:1px solid var(--border-subtle);
+  padding:0 16px;
+  box-shadow:0 1px 8px rgba(0,0,0,.04);
 }
-.logo{font-weight:700;font-size:.95rem;color:var(--accent);letter-spacing:-.3px;flex-shrink:0;}
-.logo span{color:var(--g700);}
-.tb-sep{width:1px;height:22px;background:var(--g200);flex-shrink:0;}
+.tb-brand{display:flex;align-items:center;gap:8px;flex-shrink:0;}
+.tb-brand-icon{width:28px;height:28px;border-radius:6px;background:var(--primary);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.tb-brand-icon .ms{color:#fff;font-size:16px;}
+.tb-brand-name{font-size:.85rem;font-weight:700;color:var(--text-primary);letter-spacing:-.3px;}
+.tb-doc{display:flex;align-items:center;gap:6px;}
+.tb-doc-name{font-size:.8rem;font-weight:600;color:var(--text-primary);max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.tb-autosave{display:flex;align-items:center;gap:5px;padding:2px 8px;border-radius:20px;background:var(--surface-container-low);}
+.tb-autosave-dot{width:6px;height:6px;border-radius:50%;background:var(--success);flex-shrink:0;}
+.tb-autosave span{font-size:.68rem;font-weight:600;color:var(--text-muted);}
+.tb-sep{width:1px;height:22px;background:var(--border-subtle);flex-shrink:0;margin:0 2px;}
 .tb-spacer{flex:1;}
-.btn{display:inline-flex;align-items:center;gap:5px;padding:6px 12px;border-radius:7px;font-size:.78rem;font-weight:600;cursor:pointer;border:none;transition:all .15s;white-space:nowrap;}
-.btn-primary{background:var(--accent);color:#fff;}
-.btn-primary:hover{background:var(--accent-dark);}
-.btn-outline{background:#fff;color:var(--g700);border:1.5px solid var(--g300);}
-.btn-outline:hover{border-color:var(--accent);color:var(--accent);}
-#zoom-ctrl{display:flex;align-items:center;gap:5px;}
-#zoom-ctrl label{font-size:.75rem;color:var(--g600);}
-#zoom-range{width:72px;accent-color:var(--accent);}
-#zoom-val{font-size:.75rem;color:var(--accent);font-weight:700;width:30px;}
-#tpl-picker{display:flex;align-items:center;gap:6px;}
-#tpl-picker label{font-size:.75rem;font-weight:600;color:var(--g600);}
-#tpl-select{padding:5px 8px;border-radius:7px;border:1.5px solid var(--g300);font-size:.78rem;font-family:var(--ui);color:var(--g800);cursor:pointer;background:#fff;}
 
-/* APP LAYOUT */
-#app{display:flex;flex:1;overflow:hidden;height:calc(100vh - 52px);}
+/* zoom control group */
+.tb-zoom-group{display:flex;align-items:center;gap:4px;background:var(--surface-container-low);padding:4px 8px;border-radius:8px;}
+.tb-zoom-group .ms{font-size:16px;color:var(--text-muted);cursor:pointer;padding:2px;border-radius:4px;}
+.tb-zoom-group .ms:hover{color:var(--text-primary);background:var(--surface-container);}
+#zoom-range{width:60px;accent-color:var(--primary);cursor:pointer;}
+#zoom-val{font-size:.72rem;font-weight:700;color:var(--primary);min-width:34px;text-align:center;}
 
-/* SIDEBAR */
-#sidebar{width:var(--sw);flex-shrink:0;background:#fff;border-right:1px solid var(--g200);display:flex;flex-direction:column;overflow:hidden;}
-#sidebar-tabs{display:flex;border-bottom:1px solid var(--g200);}
-.s-tab{flex:1;padding:9px 4px;text-align:center;font-size:.75rem;font-weight:600;color:var(--g600);cursor:pointer;border:none;background:transparent;border-bottom:2px solid transparent;transition:all .15s;}
-.s-tab.active{color:var(--accent);border-bottom-color:var(--accent);}
-#sidebar-body{flex:1;overflow-y:auto;padding:14px;}
+/* template picker */
+#tpl-picker{display:flex;align-items:center;gap:6px;background:var(--surface-container-low);padding:4px 8px;border-radius:8px;}
+#tpl-picker label{font-size:.68rem;font-weight:600;color:var(--text-muted);white-space:nowrap;}
+#tpl-select{font-size:.75rem;font-family:inherit;color:var(--text-primary);font-weight:600;background:transparent;border:none;cursor:pointer;outline:none;padding:0 2px;}
+
+/* topbar action buttons */
+.tb-btn{display:inline-flex;align-items:center;gap:5px;padding:5px 10px;border-radius:7px;font-size:.75rem;font-weight:600;cursor:pointer;border:none;transition:all .15s;white-space:nowrap;font-family:inherit;}
+.tb-btn .ms{font-size:16px;}
+.tb-btn-ghost{background:transparent;color:var(--text-muted);}
+.tb-btn-ghost:hover{background:var(--surface-container-low);color:var(--text-primary);}
+.tb-btn-outline{background:var(--surface-sheet);color:var(--text-primary);box-shadow:0 1px 8px rgba(0,0,0,.04);border:1px solid var(--border-subtle);}
+.tb-btn-outline:hover{background:var(--surface-container-low);}
+.tb-btn-primary{background:var(--primary-container);color:var(--on-primary);box-shadow:0 1px 8px rgba(0,0,0,.06);}
+.tb-btn-primary:hover{background:var(--accent-focus);}
+
+/* ── APP LAYOUT ── */
+#app{display:flex;flex:1;overflow:hidden;height:calc(100vh - var(--topbar-h));}
+
+/* ── SIDEBAR ── */
+#sidebar{
+  width:var(--sw);flex-shrink:0;
+  background:var(--sidebar-bg);
+  border-right:1px solid var(--border-subtle);
+  display:flex;flex-direction:column;overflow:hidden;
+  box-shadow:0 1px 8px rgba(0,0,0,.04);
+}
+#sidebar-tabs{padding:8px 10px 0;background:var(--surface-sheet);}
+.tabs-inner{display:grid;grid-template-columns:repeat(3,1fr);gap:3px;background:var(--surface-container-low);padding:3px;border-radius:10px;}
+.s-tab{
+  display:flex;align-items:center;justify-content:center;gap:5px;
+  padding:6px 4px;border-radius:7px;
+  font-size:.72rem;font-weight:600;color:var(--text-muted);
+  cursor:pointer;border:none;background:transparent;
+  transition:all .15s;white-space:nowrap;font-family:inherit;
+}
+.s-tab .ms{font-size:14px;}
+.s-tab.active{background:var(--surface-sheet);color:var(--text-primary);box-shadow:0 1px 6px rgba(0,0,0,.06);}
+.s-tab:not(.active):hover{color:var(--text-primary);}
+
+#sidebar-body{flex:1;overflow-y:auto;padding:10px;}
+
+/* section list */
+.sec-list-header{display:flex;align-items:center;justify-content:space-between;padding:4px 2px 8px;}
+.sec-list-header span{font-size:.65rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.6px;}
 .section-list{display:flex;flex-direction:column;gap:5px;}
-.section-item{display:flex;align-items:center;gap:8px;padding:9px 11px;border-radius:7px;border:1px solid var(--g200);cursor:grab;user-select:none;background:#fff;transition:box-shadow .15s;}
-.section-item:hover{box-shadow:0 2px 8px rgba(0,0,0,.07);}
+.section-item{
+  display:flex;align-items:center;gap:8px;
+  padding:8px 10px;border-radius:9px;
+  background:var(--surface-sheet);
+  box-shadow:0 1px 4px rgba(15,23,42,.05);
+  cursor:grab;user-select:none;
+  transition:box-shadow .15s,background .15s;
+}
+.section-item:hover{background:var(--surface-container-low);box-shadow:0 2px 10px rgba(15,23,42,.07);}
 .section-item.dragging{opacity:.4;}
-.drag-handle{color:var(--g400);font-size:.9rem;}
-.section-name{flex:1;font-size:.8rem;font-weight:600;color:var(--g700);}
-.toggle-switch{position:relative;width:34px;height:19px;flex-shrink:0;}
-.toggle-switch input{opacity:0;width:0;height:0;}
-.toggle-track{position:absolute;inset:0;background:var(--g300);border-radius:20px;transition:.2s;cursor:pointer;}
-.toggle-track::after{content:'';position:absolute;left:2px;top:2px;width:15px;height:15px;border-radius:50%;background:#fff;transition:.2s;}
-input:checked+.toggle-track{background:var(--accent);}
-input:checked+.toggle-track::after{transform:translateX(15px);}
-.style-panel{display:flex;flex-direction:column;gap:13px;}
-.sp-group label{display:block;font-size:.72rem;font-weight:700;color:var(--g600);margin-bottom:5px;text-transform:uppercase;letter-spacing:.5px;}
-.sp-group input[type=color]{width:100%;height:30px;border-radius:6px;border:1px solid var(--g300);cursor:pointer;padding:2px;}
-.sp-group select,.sp-group input[type=number]{width:100%;padding:6px 9px;border-radius:6px;border:1px solid var(--g300);font-size:.8rem;font-family:var(--ui);background:#fff;color:var(--g800);}
-.sp-row{display:flex;gap:7px;}
+.drag-handle{color:var(--text-muted);display:flex;align-items:center;flex-shrink:0;}
+.drag-handle .ms{font-size:16px;}
+.si-icon{width:26px;height:26px;border-radius:6px;background:var(--surface-container-high);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.si-icon .ms{font-size:14px;color:var(--primary);}
+.si-text{flex:1;min-width:0;}
+.section-name{font-size:.78rem;font-weight:600;color:var(--text-primary);display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.si-sub{font-size:.65rem;color:var(--text-muted);display:block;}
+
+/* new toggle — replaces old checkbox toggle */
+.toggle-switch{position:relative;width:36px;height:20px;flex-shrink:0;}
+.toggle-switch input{opacity:0;width:0;height:0;position:absolute;}
+.toggle-track{position:absolute;inset:0;background:var(--border-strong);border-radius:20px;transition:.2s;cursor:pointer;}
+.toggle-track::after{content:'';position:absolute;left:3px;top:3px;width:14px;height:14px;border-radius:50%;background:#fff;transition:.2s;box-shadow:0 1px 3px rgba(0,0,0,.2);}
+input:checked+.toggle-track{background:var(--primary-container);}
+input:checked+.toggle-track::after{transform:translateX(16px);}
+
+/* style panel */
+.style-panel{display:flex;flex-direction:column;gap:14px;}
+.sp-card{background:var(--surface-sheet);border-radius:10px;padding:12px;box-shadow:0 1px 4px rgba(15,23,42,.05);display:flex;flex-direction:column;gap:10px;}
+.sp-card-title{display:flex;align-items:center;gap:6px;padding-bottom:8px;border-bottom:1px solid var(--border-subtle);}
+.sp-card-title .ms{font-size:16px;color:var(--primary);}
+.sp-card-title span{font-size:.75rem;font-weight:700;color:var(--text-primary);}
+.sp-group{display:flex;flex-direction:column;gap:5px;}
+.sp-group label{font-size:.65rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;}
+.sp-group input[type=color]{width:100%;height:32px;border-radius:7px;border:1.5px solid var(--border-subtle);cursor:pointer;padding:2px;}
+.sp-group select{width:100%;padding:6px 9px;border-radius:7px;border:1.5px solid var(--border-subtle);font-size:.78rem;font-family:inherit;background:var(--surface-sheet);color:var(--text-primary);}
+.sp-group input[type=range]{width:100%;accent-color:var(--primary);cursor:pointer;}
+.sp-row{display:flex;gap:8px;}
 .sp-row .sp-group{flex:1;}
-.color-presets{display:flex;gap:5px;flex-wrap:wrap;margin-top:5px;}
-.color-dot{width:20px;height:20px;border-radius:50%;cursor:pointer;border:2px solid transparent;transition:transform .15s;}
-.color-dot:hover{transform:scale(1.15);border-color:var(--g400);}
-.color-dot.active{border-color:var(--g800);}
-.sp-divider{height:1px;background:var(--g200);margin:2px 0;}
-.editor-panel{display:flex;flex-direction:column;gap:10px;}
+.sp-val{font-size:.7rem;font-weight:700;color:var(--primary);text-align:right;}
+.color-presets{display:flex;gap:6px;flex-wrap:wrap;margin-top:2px;}
+.color-dot{width:22px;height:22px;border-radius:50%;cursor:pointer;border:2.5px solid transparent;transition:transform .15s,border-color .15s;box-shadow:0 1px 3px rgba(0,0,0,.15);}
+.color-dot:hover{transform:scale(1.15);}
+.color-dot.active{border-color:var(--text-primary);}
+.sp-divider{height:1px;background:var(--border-subtle);}
+.sp-toggle-row{display:flex;align-items:center;justify-content:space-between;}
+.sp-toggle-row span{font-size:.78rem;color:var(--text-primary);font-weight:500;}
+
+/* editor panel */
+.editor-panel{display:flex;flex-direction:column;gap:8px;}
 .field-group{display:flex;flex-direction:column;gap:5px;}
-.field-group label{font-size:.72rem;font-weight:700;color:var(--g600);text-transform:uppercase;letter-spacing:.5px;}
-.field-group input,.field-group textarea{padding:7px 9px;border-radius:6px;border:1px solid var(--g300);font-size:.8rem;font-family:var(--ui);color:var(--g800);background:#fff;resize:vertical;line-height:1.5;transition:border-color .15s;}
-.field-group input:focus,.field-group textarea:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-light);}
+.field-group label{font-size:.65rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;}
+.field-group input,.field-group textarea{padding:7px 9px;border-radius:7px;border:1.5px solid var(--border-subtle);font-size:.78rem;font-family:inherit;color:var(--text-primary);background:var(--surface-sheet);resize:vertical;line-height:1.5;transition:border-color .15s;}
+.field-group input:focus,.field-group textarea:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(0,74,198,.12);}
 .list-item-row{display:flex;gap:5px;align-items:flex-start;}
 .list-item-row input,.list-item-row textarea{flex:1;}
-.btn-rm{background:none;border:none;color:var(--g400);cursor:pointer;font-size:1rem;padding:3px 5px;border-radius:4px;}
+.btn-rm{background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:.9rem;padding:3px 5px;border-radius:5px;}
 .btn-rm:hover{color:#dc2626;background:#fee2e2;}
-.btn-add{background:var(--accent-light);color:var(--accent);border:none;padding:5px 11px;border-radius:6px;font-size:.76rem;font-weight:700;cursor:pointer;}
-.btn-add:hover{background:#c7d7fd;}
-.subsection-card{border:1px solid var(--g200);border-radius:8px;padding:10px;background:var(--g50);display:flex;flex-direction:column;gap:7px;}
-.subsection-card .card-title{font-size:.77rem;font-weight:700;color:var(--g700);border-bottom:1px solid var(--g200);padding-bottom:5px;display:flex;justify-content:space-between;align-items:center;}
+.btn-add{background:var(--accent-soft);color:var(--primary);border:none;padding:5px 12px;border-radius:7px;font-size:.73rem;font-weight:700;cursor:pointer;font-family:inherit;}
+.btn-add:hover{background:var(--primary-fixed);}
+.subsection-card{border:1px solid var(--border-subtle);border-radius:9px;padding:10px;background:var(--surface-container-low);display:flex;flex-direction:column;gap:7px;}
+.subsection-card .card-title{font-size:.75rem;font-weight:700;color:var(--text-primary);border-bottom:1px solid var(--border-subtle);padding-bottom:5px;display:flex;justify-content:space-between;align-items:center;}
 
-/* MAIN PREVIEW */
-#main{flex:1;overflow:auto;background:#b8bfc8;}
-/* Scroll-safe wrapper: preview-wrapper sits inside a flex centering shell.
-   We never touch marginTop/marginBottom on preview-wrapper (that was the scroll bug).
-   Instead we set an explicit height on the outer shell so the scrollable
-   area always starts at the top. */
+/* ── MAIN CANVAS ── */
+#main{flex:1;overflow:auto;background:var(--canvas-bg);}
 #main-inner{
   display:flex;flex-direction:column;align-items:center;
-  padding:28px 20px 60px;
-  /* min-height matches actual scaled content so scroll doesn't collapse */
+  padding:24px 20px 80px;
   min-height:100%;
 }
+#canvas-hud{
+  width:794px;max-width:100%;
+  display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;
+  margin-bottom:16px;
+  background:rgba(255,255,255,.92);
+  backdrop-filter:blur(12px);
+  border-radius:12px;
+  padding:8px 12px;
+  box-shadow:0 4px 20px rgba(15,23,42,.07);
+  border:1px solid var(--border-subtle);
+}
+.hud-left{display:flex;align-items:center;gap:8px;}
+.hud-right{display:flex;align-items:center;gap:8px;}
+.hud-page-info{display:flex;align-items:center;gap:5px;background:var(--surface-container-low);border-radius:7px;padding:4px 10px;}
+.hud-page-info span{font-size:.72rem;font-weight:600;color:var(--text-primary);}
+.hud-page-info .pg-cur{color:var(--primary);font-weight:700;}
+.hud-page-info .pg-sep{color:var(--text-muted);}
+.hud-ats{display:flex;align-items:center;gap:5px;padding:4px 10px;border-radius:7px;background:var(--surface-container-low);}
+.hud-ats-dot{width:7px;height:7px;border-radius:50%;background:var(--success);}
+.hud-ats span{font-size:.68rem;font-weight:600;color:var(--text-muted);}
+.hud-btn{display:inline-flex;align-items:center;gap:4px;padding:5px 10px;border-radius:7px;font-size:.72rem;font-weight:600;cursor:pointer;border:none;font-family:inherit;transition:all .15s;}
+.hud-btn .ms{font-size:15px;}
+.hud-btn-ghost{background:var(--surface-container-low);color:var(--text-primary);}
+.hud-btn-ghost:hover{background:var(--surface-container);}
+.hud-btn-primary{background:var(--primary-container);color:var(--on-primary);box-shadow:0 1px 6px rgba(0,0,0,.08);}
+.hud-btn-primary:hover{background:var(--accent-focus);}
+
+/* preview wrapper */
 #preview-wrapper{
   display:flex;flex-direction:column;align-items:center;gap:0;
   transform-origin:top center;
   transition:transform .2s;
-  /* We update this via JS to compensate scaled size */
 }
 
-/* PAGE VISUAL (preview only) */
+/* page visual */
 .resume-page{
   width:210mm;height:297mm;background:#fff;
-  box-shadow:0 4px 28px rgba(0,0,0,.28);
+  box-shadow:0 8px 40px rgba(15,23,42,.18);
   overflow:hidden;position:relative;flex-shrink:0;
+  border-radius:2px;
 }
-/* Page number footer — sits at the bottom of each page */
 .r-page-num{
   position:absolute;bottom:4mm;left:0;right:0;
-  text-align:center;
-  font-size:7.5pt;color:#aaa;
+  text-align:center;font-size:7.5pt;color:#aaa;
   pointer-events:none;user-select:none;
 }
-/* gap bar between pages — preview only, never in PDF */
 .page-gap{
-  width:210mm;height:20px;background:transparent;flex-shrink:0;
+  width:210mm;height:24px;background:transparent;flex-shrink:0;
   display:flex;align-items:center;justify-content:center;
 }
 .page-gap-label{
-  font-size:.6rem;font-weight:700;color:rgba(255,255,255,.45);
+  font-size:.6rem;font-weight:700;
+  color:rgba(255,255,255,.5);
   letter-spacing:.8px;text-transform:uppercase;
-  background:rgba(0,0,0,.25);padding:1px 10px;border-radius:10px;
+  background:rgba(15,23,42,.3);padding:2px 12px;border-radius:20px;
   pointer-events:none;user-select:none;
 }
 .page-count-footer{
-  margin-top:8px;font-size:.63rem;color:rgba(255,255,255,.38);
+  margin-top:10px;font-size:.63rem;color:rgba(255,255,255,.35);
   font-weight:600;letter-spacing:.5px;user-select:none;flex-shrink:0;
 }
 
-/* RESUME TYPOGRAPHY (shared across templates) */
-/* font-family, font-size, line-height are set dynamically via resumeCSS()
-   injected inside each .resume-page — do NOT hardcode them here */
-.r-page-inner{
-  width:210mm;
-  color:#111;
-}
+/* ── RESUME TYPOGRAPHY (unchanged) ── */
+.r-page-inner{width:210mm;color:#111;}
 .r-name{font-size:22pt;font-weight:700;letter-spacing:-.5px;line-height:1.1;}
 .r-contact{display:flex;flex-wrap:wrap;gap:4px 14px;margin-top:6px;font-size:8.5pt;color:#555;}
 .r-contact span{display:flex;align-items:center;gap:3px;}
 .r-contact a{color:inherit;text-decoration:none;}
 .r-divider{height:2px;margin:8px 0;}
 .r-summary{font-size:9.5pt;color:#333;margin-bottom:10px;text-align:justify;line-height:1.5;}
-/* CRITICAL: never split a section across pages */
-.r-section{
-  margin-bottom:10px;
-  page-break-inside:avoid;
-  break-inside:avoid;
-}
-.r-section-title{
-  font-size:10.5pt;font-weight:700;text-transform:uppercase;
-  letter-spacing:1.5px;padding-bottom:2px;margin-bottom:7px;
-  page-break-after:avoid;break-after:avoid;
-}
-.r-entry{
-  margin-bottom:8px;
-  page-break-inside:avoid;
-  break-inside:avoid;
-}
+.r-section{margin-bottom:10px;page-break-inside:avoid;break-inside:avoid;}
+.r-section-title{font-size:10.5pt;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;padding-bottom:2px;margin-bottom:7px;page-break-after:avoid;break-after:avoid;}
+.r-entry{margin-bottom:8px;page-break-inside:avoid;break-inside:avoid;}
 .r-entry-head{display:flex;justify-content:space-between;align-items:baseline;gap:8px;}
 .r-entry-title{font-weight:700;font-size:9.5pt;color:#111;}
 .r-entry-date{font-size:8.5pt;color:#666;white-space:nowrap;flex-shrink:0;}
@@ -181,8 +286,6 @@ input:checked+.toggle-track::after{transform:translateX(15px);}
 .r-course-row{display:flex;justify-content:space-between;gap:8px;font-size:8.5pt;}
 .r-course-name{color:#333;flex:1;}
 .r-course-date{color:#888;white-space:nowrap;flex-shrink:0;}
-
-/* two-column template */
 .tc-wrap{display:flex;min-height:297mm;}
 .tc-left{width:68mm;padding:14mm 7mm;flex-shrink:0;}
 .tc-right{flex:1;padding:14mm 14mm 14mm 10mm;}
@@ -190,41 +293,64 @@ input:checked+.toggle-track::after{transform:translateX(15px);}
 .tc-info-row{font-size:7.5pt;color:rgba(255,255,255,.85);margin-bottom:3px;}
 .tc-info-label{font-weight:700;display:block;color:rgba(255,255,255,.6);}
 
-/* PRINT */
+/* ── PRINT ── */
 @media print{
   body{background:#fff;}
-  #topbar,#sidebar{display:none!important;}
+  #topbar,#sidebar,#canvas-hud{display:none!important;}
   #main{padding:0;background:#fff;}
   #preview-wrapper{transform:none!important;}
   .resume-page{box-shadow:none;}
   .page-gap,.page-gap-label,.page-count-footer{display:none!important;}
 }
 
-/* SCROLLBAR */
+/* ── SCROLLBAR ── */
 ::-webkit-scrollbar{width:5px;height:5px;}
 ::-webkit-scrollbar-track{background:transparent;}
-::-webkit-scrollbar-thumb{background:var(--g400);border-radius:3px;}
+::-webkit-scrollbar-thumb{background:var(--border-strong);border-radius:3px;}
 
-/* NOTIFICATION */
-#notif{position:fixed;bottom:20px;right:20px;z-index:999;background:var(--g800);color:#fff;padding:9px 16px;border-radius:8px;font-size:.8rem;font-weight:600;opacity:0;pointer-events:none;transition:opacity .3s;box-shadow:0 4px 16px rgba(0,0,0,.22);}
+/* ── NOTIFICATION ── */
+#notif{
+  position:fixed;bottom:24px;right:24px;z-index:999;
+  background:var(--inverse-surface);color:#fff;
+  padding:10px 18px;border-radius:10px;
+  font-size:.78rem;font-weight:600;
+  opacity:0;pointer-events:none;transition:opacity .3s;
+  box-shadow:0 6px 20px rgba(0,0,0,.25);
+  display:flex;align-items:center;gap:8px;
+}
+#notif::before{content:'✓';font-size:.8rem;opacity:.7;}
 #notif.show{opacity:1;}
 
-/* PDF LOADING */
-#pdf-loading{display:none;position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.55);align-items:center;justify-content:center;flex-direction:column;gap:12px;}
+/* ── PDF LOADING ── */
+#pdf-loading{display:none;position:fixed;inset:0;z-index:200;background:rgba(15,23,42,.6);align-items:center;justify-content:center;flex-direction:column;gap:14px;backdrop-filter:blur(4px);}
 #pdf-loading.show{display:flex;}
-.pdf-spinner{width:42px;height:42px;border:4px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite;}
+.pdf-spinner{width:44px;height:44px;border:3px solid rgba(255,255,255,.2);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;}
 @keyframes spin{to{transform:rotate(360deg);}}
-#pdf-loading p{color:#fff;font-size:.88rem;font-weight:600;}
+#pdf-loading p{color:#fff;font-size:.85rem;font-weight:600;}
 </style>
 </head>
 <body>
 
-<!-- TOPBAR -->
+<!-- ══ TOPBAR ══ -->
 <div id="topbar">
-  <div class="logo">Resume<span>Editor</span></div>
+  <!-- Brand -->
+  <div class="tb-brand">
+    <div class="tb-brand-icon"><span class="ms">description</span></div>
+    <span class="tb-brand-name">ResumeEditor</span>
+  </div>
   <div class="tb-sep"></div>
+  <!-- Doc name + autosave -->
+  <div class="tb-doc">
+    <span class="tb-doc-name">Ronald Sebastian – CV</span>
+    <div class="tb-autosave">
+      <div class="tb-autosave-dot"></div>
+      <span>Auto-saved</span>
+    </div>
+  </div>
+  <div class="tb-sep"></div>
+  <!-- Template picker -->
   <div id="tpl-picker">
-    <label>Template:</label>
+    <label>Layout</label>
     <select id="tpl-select">
       <option value="classic">Classic</option>
       <option value="modern">Modern</option>
@@ -237,77 +363,185 @@ input:checked+.toggle-track::after{transform:translateX(15px);}
     </select>
   </div>
   <div class="tb-sep"></div>
-  <div id="zoom-ctrl">
-    <label>Zoom</label>
+  <!-- Zoom -->
+  <div class="tb-zoom-group">
+    <span class="ms" onclick="zoomStep(-5)" title="Zoom out">remove</span>
     <input type="range" id="zoom-range" min="35" max="120" value="72"/>
     <span id="zoom-val">72%</span>
+    <span class="ms" onclick="zoomStep(5)" title="Zoom in">add</span>
   </div>
   <div class="tb-spacer"></div>
-  <button class="btn btn-outline" onclick="resetData()">↺ Reset</button>
-  <button class="btn btn-outline" onclick="exportJSON()">⬇ JSON</button>
-  <button class="btn btn-primary" onclick="downloadPDF()">⬇ Download PDF</button>
+  <!-- Actions -->
+  <button class="tb-btn tb-btn-ghost" onclick="resetData()" title="Reset to defaults">
+    <span class="ms">restart_alt</span>Reset
+  </button>
+  <button class="tb-btn tb-btn-outline" onclick="exportJSON()">
+    <span class="ms">data_object</span>JSON
+  </button>
+  <button class="tb-btn tb-btn-primary" onclick="downloadPDF()">
+    <span class="ms">download</span>Download PDF
+  </button>
 </div>
 
+<!-- ══ APP SHELL ══ -->
 <div id="app">
+
+  <!-- ── SIDEBAR ── -->
   <div id="sidebar">
     <div id="sidebar-tabs">
-      <button class="s-tab active" data-tab="sections">Sections</button>
-      <button class="s-tab" data-tab="edit">Edit</button>
-      <button class="s-tab" data-tab="style">Style</button>
+      <div class="tabs-inner">
+        <button class="s-tab active" data-tab="sections">
+          <span class="ms">view_agenda</span>Sections
+        </button>
+        <button class="s-tab" data-tab="style">
+          <span class="ms">palette</span>Style
+        </button>
+        <button class="s-tab" data-tab="edit">
+          <span class="ms">edit_note</span>Content
+        </button>
+      </div>
     </div>
+
     <div id="sidebar-body">
+      <!-- SECTIONS TAB -->
       <div id="tab-sections" style="display:flex;flex-direction:column;">
-        <p style="font-size:.72rem;color:var(--g500);margin-bottom:9px;">Drag to reorder · Toggle visibility</p>
+        <div class="sec-list-header">
+          <span>Document Structure</span>
+        </div>
         <div class="section-list" id="section-list"></div>
       </div>
+
+      <!-- STYLE TAB -->
+      <div id="tab-style" style="display:none;flex-direction:column;">
+        <div class="style-panel">
+
+          <!-- Accent Color -->
+          <div class="sp-card">
+            <div class="sp-card-title">
+              <span class="ms">color_lens</span>
+              <span>Accent Color</span>
+            </div>
+            <div class="sp-group">
+              <input type="color" id="color-picker" value="#1a56db"/>
+              <div class="color-presets" id="color-presets"></div>
+            </div>
+          </div>
+
+          <!-- Typography -->
+          <div class="sp-card">
+            <div class="sp-card-title">
+              <span class="ms">text_fields</span>
+              <span>Typography</span>
+            </div>
+            <div class="sp-group">
+              <label>Font Family</label>
+              <select id="font-select">
+                <option value="'Times New Roman',Times,serif">Times New Roman (Classic)</option>
+                <option value="Georgia,serif">Georgia (Elegant)</option>
+                <option value="Arial,Helvetica,sans-serif">Arial (Clean)</option>
+                <option value="Calibri,sans-serif">Calibri (Modern)</option>
+                <option value="'Trebuchet MS',sans-serif">Trebuchet MS</option>
+              </select>
+            </div>
+            <div class="sp-row">
+              <div class="sp-group">
+                <label>Font Size</label>
+                <div style="display:flex;align-items:center;gap:6px;">
+                  <input type="range" id="font-size" min="8" max="13" step="0.5" value="10" style="flex:1;"/>
+                  <span class="sp-val" id="font-size-val">10 pt</span>
+                </div>
+              </div>
+              <div class="sp-group">
+                <label>Line Height</label>
+                <div style="display:flex;align-items:center;gap:6px;">
+                  <input type="range" id="line-height" min="1.1" max="2" step="0.05" value="1.45" style="flex:1;"/>
+                  <span class="sp-val" id="line-height-val">1.45</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Margins -->
+          <div class="sp-card">
+            <div class="sp-card-title">
+              <span class="ms">margin</span>
+              <span>Page Margins</span>
+            </div>
+            <div class="sp-row">
+              <div class="sp-group">
+                <label>Top / Bottom</label>
+                <div style="display:flex;align-items:center;gap:6px;">
+                  <input type="range" id="margin-v" min="5" max="30" step="1" value="14" style="flex:1;"/>
+                  <span class="sp-val" id="margin-v-val">14 mm</span>
+                </div>
+              </div>
+              <div class="sp-group">
+                <label>Left / Right</label>
+                <div style="display:flex;align-items:center;gap:6px;">
+                  <input type="range" id="margin-h" min="5" max="30" step="1" value="16" style="flex:1;"/>
+                  <span class="sp-val" id="margin-h-val">16 mm</span>
+                </div>
+              </div>
+            </div>
+            <div class="sp-toggle-row">
+              <div style="display:flex;align-items:center;gap:7px;">
+                <span class="ms" style="font-size:16px;color:var(--text-muted);">format_list_numbered</span>
+                <span>Show Page Numbers</span>
+              </div>
+              <label class="toggle-switch">
+                <input type="checkbox" id="pagenum-toggle" checked/>
+                <span class="toggle-track"></span>
+              </label>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- CONTENT TAB -->
       <div id="tab-edit" style="display:none;flex-direction:column;">
         <div class="editor-panel" id="editor-panel"></div>
       </div>
-      <div id="tab-style" style="display:none;flex-direction:column;">
-        <div class="style-panel">
-          <div class="sp-group">
-            <label>Accent Color</label>
-            <input type="color" id="color-picker" value="#1a56db"/>
-            <div class="color-presets" id="color-presets"></div>
-          </div>
-          <div class="sp-divider"></div>
-          <div class="sp-group">
-            <label>Font Family</label>
-            <select id="font-select">
-              <option value="'Times New Roman',Times,serif">Times New Roman (Classic)</option>
-              <option value="Georgia,serif">Georgia (Elegant)</option>
-              <option value="Arial,Helvetica,sans-serif">Arial (Clean)</option>
-              <option value="Calibri,sans-serif">Calibri (Modern)</option>
-              <option value="'Trebuchet MS',sans-serif">Trebuchet MS</option>
-            </select>
-          </div>
-          <div class="sp-row">
-            <div class="sp-group"><label>Font Size (pt)</label><input type="number" id="font-size" value="10" min="8" max="13"/></div>
-            <div class="sp-group"><label>Line Height</label><input type="number" id="line-height" value="1.45" min="1.1" max="2" step="0.05"/></div>
-          </div>
-          <div class="sp-divider"></div>
-          <div class="sp-row">
-            <div class="sp-group"><label>Top/Bottom (mm)</label><input type="number" id="margin-v" value="14" min="5" max="30"/></div>
-            <div class="sp-group"><label>Left/Right (mm)</label><input type="number" id="margin-h" value="16" min="5" max="30"/></div>
-          </div>
-          <div class="sp-divider"></div>
-          <div class="sp-group" style="display:flex;align-items:center;justify-content:space-between;">
-            <label style="margin-bottom:0;">Page Numbers</label>
-            <label class="toggle-switch" style="flex-shrink:0;">
-              <input type="checkbox" id="pagenum-toggle" checked/>
-              <span class="toggle-track"></span>
-            </label>
-          </div>
-        </div>
-      </div>
     </div>
   </div>
 
+  <!-- ── CANVAS ── -->
   <div id="main">
     <div id="main-inner">
+      <!-- Floating HUD -->
+      <div id="canvas-hud">
+        <div class="hud-left">
+          <div class="hud-page-info">
+            <span class="pg-cur" id="hud-page-cur">1</span>
+            <span class="pg-sep">/</span>
+            <span id="hud-page-tot">1</span>
+            <span style="font-size:.68rem;color:var(--text-muted);margin-left:2px;">pages</span>
+          </div>
+          <div class="hud-ats">
+            <div class="hud-ats-dot"></div>
+            <span>A4 · ATS Ready</span>
+          </div>
+        </div>
+        <div class="hud-right">
+          <button class="hud-btn hud-btn-ghost" onclick="zoomStep(-5)">
+            <span class="ms">remove</span>
+          </button>
+          <span style="font-size:.72rem;font-weight:700;color:var(--primary);min-width:32px;text-align:center;" id="hud-zoom-val">72%</span>
+          <button class="hud-btn hud-btn-ghost" onclick="zoomStep(5)">
+            <span class="ms">add</span>
+          </button>
+          <button class="hud-btn hud-btn-ghost" onclick="fitZoom()" title="Fit to window">
+            <span class="ms">fit_screen</span>Fit
+          </button>
+          <button class="hud-btn hud-btn-primary" onclick="downloadPDF()">
+            <span class="ms">picture_as_pdf</span>Export
+          </button>
+        </div>
+      </div>
       <div id="preview-wrapper"></div>
     </div>
   </div>
+
 </div>
 
 <div id="pdf-loading"><div class="pdf-spinner"></div><p>Generating PDF…</p></div>
@@ -374,15 +608,15 @@ const DEFAULT_DATA = {
 };
 
 const SECTION_META=[
-  {key:"summary",label:"Professional Summary",icon:"📝"},
-  {key:"experience",label:"Work Experience",icon:"💼"},
-  {key:"education",label:"Education",icon:"🎓"},
-  {key:"internships",label:"Internships",icon:"🏢"},
-  {key:"skills",label:"Skills",icon:"⚡"},
-  {key:"courses",label:"Certifications & Courses",icon:"📜"},
-  {key:"organizations",label:"Organizations",icon:"🏅"},
-  {key:"languages",label:"Languages",icon:"🌐"},
-  {key:"personalInfo",label:"Personal Information",icon:"👤"},
+  {key:"summary",   label:"Professional Summary", sub:"High-impact intro",          msIcon:"edit_note"},
+  {key:"experience",label:"Work Experience",       sub:"Career history",             msIcon:"work"},
+  {key:"education", label:"Education",             sub:"Degrees & academics",        msIcon:"school"},
+  {key:"internships",label:"Internships",          sub:"Apprentice & intern roles",  msIcon:"domain"},
+  {key:"skills",    label:"Technical Skills",      sub:"Tools & technologies",       msIcon:"bolt"},
+  {key:"courses",   label:"Certifications",        sub:"Verified credentials",       msIcon:"verified"},
+  {key:"organizations",label:"Organizations",      sub:"Leadership & clubs",         msIcon:"groups"},
+  {key:"languages", label:"Languages",             sub:"Communication skills",       msIcon:"translate"},
+  {key:"personalInfo",label:"Personal Information",sub:"Birth, nationality, license",msIcon:"badge"},
 ];
 const COLOR_PRESETS=["#1a56db","#0e7490","#047857","#6d28d9","#b91c1c","#b45309","#374151","#0f172a"];
 
@@ -599,7 +833,7 @@ function buildSectionHtml(key, tplKey){
     case 'organizations':
       if(!data.organizations.length) return '';
       return `<div class="r-section"><div class="r-section-title" style="${secTitleStyle}">Organizations</div>
-        <ul>${data.organizations.map(o=>`<li style="font-size:9pt;color:#333;">${x(o)}</li>`).join('')}</ul>
+        <ul style="margin:0;padding-left:16px;">${data.organizations.map(o=>`<li style="font-size:9pt;color:#333;margin-bottom:2px;line-height:1.45;">${x(o)}</li>`).join('')}</ul>
       </div>`;
 
     case 'languages':
@@ -929,6 +1163,12 @@ function renderPages(){
     wrapper.appendChild(footer);
   }
 
+  // Update HUD page counter
+  const hudCur = document.getElementById('hud-page-cur');
+  const hudTot = document.getElementById('hud-page-tot');
+  if(hudCur) hudCur.textContent = '1';
+  if(hudTot) hudTot.textContent = String(numPages);
+
   setTimeout(()=>applyZoom(parseInt(zoomRange.value)), 80);
 }
 
@@ -947,90 +1187,133 @@ function applyZoom(v){
   const scale = v / 100;
   previewWrapper.style.transform = `scale(${scale})`;
   zoomVal.textContent = v + '%';
-  // After scaling, the wrapper's layout height stays at natural size.
-  // When scale < 1 the bottom gets clipped by the scroll container,
-  // so we pad #main-inner enough to accommodate the scaled height.
+  const hudZV = document.getElementById('hud-zoom-val');
+  if(hudZV) hudZV.textContent = v + '%';
   requestAnimationFrame(() => {
-    const naturalH = previewWrapper.offsetHeight;       // unscaled layout height
-    const scaledH  = naturalH * scale;                  // visible height after scale
+    const naturalH = previewWrapper.offsetHeight;
+    const scaledH  = naturalH * scale;
     const mainInner = document.getElementById('main-inner');
-    // Set min-height so the scroll area is always correct
     mainInner.style.minHeight = (scaledH + 88) + 'px';
   });
+}
+function zoomStep(delta){
+  const r = document.getElementById('zoom-range');
+  const v = Math.min(120, Math.max(35, parseInt(r.value) + delta));
+  r.value = v;
+  applyZoom(v);
+}
+function fitZoom(){
+  const main = document.getElementById('main');
+  const availW = main.clientWidth - 48;
+  const pageW  = 794; // 210mm at 96dpi
+  const fit    = Math.floor((availW / pageW) * 100);
+  const v      = Math.min(120, Math.max(35, fit));
+  const r      = document.getElementById('zoom-range');
+  r.value = v;
+  applyZoom(v);
 }
 zoomRange.addEventListener('input', () => applyZoom(parseInt(zoomRange.value)));
 
 // ─────────────────────────────────────────────────────────────
-// PDF EXPORT — clean clone, no UI labels
+// PDF EXPORT — pre-paginated print window (matches preview exactly)
+// Each page is an explicit 210mm × 297mm div. The browser prints
+// one div per page with no reflowing, no extra margins, no gaps.
 // ─────────────────────────────────────────────────────────────
-async function downloadPDF(){
-  const loading = document.getElementById('pdf-loading');
-  loading.classList.add('show');
-  try{
-    const tpl = TEMPLATES[currentTpl] || TEMPLATES.classic;
-    const hex = ST.accent;
+function downloadPDF(){
+  const tpl = TEMPLATES[currentTpl] || TEMPLATES.classic;
+  const hex = ST.accent;
 
-    // Build a clean, standalone container — NO page-gap labels, NO UI elements
-    const container = document.createElement('div');
-    container.style.cssText = 'width:210mm;';
+  // Reuse the same pagination engine as the preview
+  const blocks  = buildBlocks(currentTpl);
+  const heights = measureBlocks(blocks);
+  const pages   = paginateBlocks(heights, currentTpl);
+  const numPages = pages.length;
 
-    const st = document.createElement('style');
-    st.textContent = resumeCSS() + `
-      /* Extra PDF safety */
-      .r-section{page-break-inside:avoid!important;break-inside:avoid!important;}
-      .r-entry{page-break-inside:avoid!important;break-inside:avoid!important;}
-      .r-section-title{page-break-after:avoid!important;break-after:avoid!important;}
-      .r-page-inner{padding:${ST.marginV}mm ${ST.marginH}mm;}
-    `;
-    container.appendChild(st);
-
-    if(currentTpl === 'twocol'){
-      const rightSections = ['summary','experience','education','internships','courses','organizations'];
-      let rightHtml = '';
-      sectionOrder.forEach(k => {
-        if(!sectionVis[k]) return;
-        if(!rightSections.includes(k)) return;
-        rightHtml += buildSectionHtml(k, 'twocol');
-      });
-      const content = document.createElement('div');
-      content.innerHTML = tpl.wrapContent(rightHtml, data, hex, rgba(hex,.12), rgba(hex,.4), ST.marginV, ST.marginH, buildTwoColLeft);
-      container.appendChild(content);
-    } else {
-      const content = document.createElement('div');
-      content.className = 'r-page-inner';
-      // Header
-      let hHtml = tpl.headerHtml(data, hex);
-      hHtml = hHtml.replace(/VAR_MVmm/g, ST.marginV+'mm').replace(/VAR_MHmm/g, ST.marginH+'mm');
-      content.innerHTML = hHtml;
-      // Sections
-      sectionOrder.forEach(key => {
-        if(!sectionVis[key]) return;
-        const html = buildSectionHtml(key, currentTpl);
-        if(!html) return;
-        const el = document.createElement('div');
-        el.style.cssText = 'page-break-inside:avoid;break-inside:avoid;';
-        el.innerHTML = html;
-        content.appendChild(el);
-      });
-      container.appendChild(content);
+  // CSS injected into the print window
+  const printStyles = resumeCSS() + `
+    *,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
+    html, body { margin:0; padding:0; background:#fff; }
+    /* Each .pdf-page is exactly one A4 sheet */
+    .pdf-page {
+      width:210mm;
+      height:297mm;
+      overflow:hidden;
+      position:relative;
+      page-break-after:always;
+      break-after:page;
     }
+    .pdf-page:last-child { page-break-after:auto; break-after:auto; }
+    /* Page number — absolute positioned at bottom center, same as preview */
+    .pdf-pagenum {
+      position:absolute; bottom:4mm; left:0; right:0;
+      text-align:center; font-size:7.5pt; color:#aaa;
+      font-family:inherit;
+    }
+    /* Banner shown on screen only */
+    #print-banner {
+      font-family:sans-serif; background:#1a56db; color:#fff;
+      padding:10px 16px; font-size:13px;
+      display:flex; align-items:center; gap:12px; flex-wrap:wrap;
+    }
+    @media print {
+      #print-banner { display:none !important; }
+      html, body { margin:0; padding:0; }
+      @page { size:A4 portrait; margin:0; }
+    }
+  `;
 
-    await html2pdf().set({
-      margin: 0,
-      filename: 'Ronald_Sebastian_Resume.pdf',
-      image: { type: 'jpeg', quality: 1 },
-      html2canvas: { scale: 3, useCORS: true, letterRendering: true },
-      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait', compress: true },
-      pagebreak: { mode: ['avoid-all', 'css', 'legacy'], before: '.page-break-before', avoid: ['.r-section','.r-entry'] }
-    }).from(container).save();
+  // Build one .pdf-page div per page, mirroring renderPages()
+  let pagesHtml = '';
+  const showNums = ST.showPageNums !== false;
 
-    notify('PDF downloaded!');
-  } catch(err){
-    console.error(err);
-    notify('Error generating PDF — check console.');
-  } finally {
-    loading.classList.remove('show');
+  if(currentTpl === 'twocol'){
+    // Two-col: single page, content flows naturally
+    const inner = blocks[0].outerHTML;
+    pagesHtml = `<div class="pdf-page">${inner}</div>`;
+  } else {
+    for(let pi = 0; pi < numPages; pi++){
+      let innerHtml = '';
+      pages[pi].forEach(bi => {
+        innerHtml += blocks[bi].outerHTML;
+      });
+      // Page number label — only when enabled and more than 1 page
+      const pageNumHtml = (showNums && numPages > 1)
+        ? `<div class="pdf-pagenum">${pi + 1} / ${numPages}</div>`
+        : '';
+      pagesHtml += `
+        <div class="pdf-page">
+          <div class="r-page-inner" style="padding:${ST.marginV}mm ${ST.marginH}mm ${showNums && numPages > 1 ? ST.marginV + 5 : ST.marginV}mm ${ST.marginH}mm;">
+            ${innerHtml}
+          </div>
+          ${pageNumHtml}
+        </div>`;
+    }
   }
+
+  const win = window.open('', '_blank', 'width=900,height=700');
+  if(!win){ notify('Allow popups to download PDF'); return; }
+
+  win.document.write(`<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8"/>
+<title>Ronald Sebastian – Resume</title>
+<style>${printStyles}</style>
+</head>
+<body>
+<div id="print-banner">
+  <strong>💡 Save as PDF:</strong>
+  <span>In the print dialog set <strong>Margins → None</strong> and <strong>Paper → A4</strong></span>
+</div>
+${pagesHtml}
+</body>
+</html>`);
+  win.document.close();
+
+  win.onload = function(){
+    setTimeout(()=>{ win.focus(); win.print(); }, 500);
+  };
+  notify('Print dialog opening — save as PDF');
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -1068,7 +1351,17 @@ function renderSectionList(){
     item.className = 'section-item';
     item.draggable = true;
     item.dataset.key = key;
-    item.innerHTML = `<span class="drag-handle">⠿</span><span style="font-size:.9rem">${meta.icon}</span><span class="section-name">${meta.label}</span><label class="toggle-switch"><input type="checkbox" ${sectionVis[key]?'checked':''} data-key="${key}"/><span class="toggle-track"></span></label>`;
+    item.innerHTML = `
+      <span class="drag-handle"><span class="ms">drag_indicator</span></span>
+      <div class="si-icon"><span class="ms">${meta.msIcon}</span></div>
+      <div class="si-text">
+        <span class="section-name">${meta.label}</span>
+        <span class="si-sub">${meta.sub}</span>
+      </div>
+      <label class="toggle-switch">
+        <input type="checkbox" ${sectionVis[key]?'checked':''} data-key="${key}"/>
+        <span class="toggle-track"></span>
+      </label>`;
     item.querySelector('input').addEventListener('change', ev=>{
       sectionVis[ev.target.dataset.key] = ev.target.checked;
       renderPages(); persist();
@@ -1108,18 +1401,33 @@ function initStylePanel(){
   });
   document.getElementById('color-picker').value  = ST.accent;
   document.getElementById('font-select').value   = ST.font;
-  document.getElementById('font-size').value     = ST.fontSize;
-  document.getElementById('line-height').value   = ST.lineHeight;
-  document.getElementById('margin-v').value      = ST.marginV;
-  document.getElementById('margin-h').value      = ST.marginH;
 
-  document.getElementById('color-picker').addEventListener('input', e=>{ ST.accent=e.target.value; document.querySelectorAll('.color-dot').forEach(d=>d.classList.remove('active')); renderPages(); persist(); });
+  // Range sliders — sync value labels on load
+  function syncSlider(id, labelId, suffix){
+    const el = document.getElementById(id);
+    const lbl = document.getElementById(labelId);
+    if(el && lbl) lbl.textContent = el.value + (suffix||'');
+    el && el.addEventListener('input', ()=>{
+      if(lbl) lbl.textContent = el.value + (suffix||'');
+    });
+  }
+  // Set slider values from ST state
+  document.getElementById('font-size').value   = ST.fontSize;
+  document.getElementById('line-height').value = ST.lineHeight;
+  document.getElementById('margin-v').value    = ST.marginV;
+  document.getElementById('margin-h').value    = ST.marginH;
 
-  // Font-family has its own handler so we can auto-adjust line-height
-  // Sans-serif fonts (Arial, Calibri, Trebuchet) have taller x-heights than
-  // serif fonts — 1.45 line-height for Times looks like 1.6+ for Arial.
-  // We nudge the default line-height down for sans fonts automatically,
-  // but only if the user hasn't manually changed it from the last auto value.
+  syncSlider('font-size',   'font-size-val',   ' pt');
+  syncSlider('line-height', 'line-height-val',  '');
+  syncSlider('margin-v',    'margin-v-val',    ' mm');
+  syncSlider('margin-h',    'margin-h-val',    ' mm');
+
+  document.getElementById('color-picker').addEventListener('input', e=>{
+    ST.accent=e.target.value;
+    document.querySelectorAll('.color-dot').forEach(d=>d.classList.remove('active'));
+    renderPages(); persist();
+  });
+
   const FONT_LH = {
     "'Times New Roman',Times,serif": 1.45,
     "Georgia,serif":                 1.45,
@@ -1127,17 +1435,17 @@ function initStylePanel(){
     "Calibri,sans-serif":            1.30,
     "'Trebuchet MS',sans-serif":     1.32,
   };
-  let _lastAutoLH = FONT_LH[ST.font] || 1.45; // track last auto-set value
+  let _lastAutoLH = FONT_LH[ST.font] || 1.45;
 
   document.getElementById('font-select').addEventListener('change', ()=>{
     ST.font = document.getElementById('font-select').value;
-    // Only auto-adjust line-height if user hasn't deviated from auto values
     const currentLH = parseFloat(document.getElementById('line-height').value);
     const autoLH    = FONT_LH[ST.font] || 1.40;
-    // Snap to new auto value if user is still on an auto value
     if(Math.abs(currentLH - _lastAutoLH) < 0.01){
       ST.lineHeight = autoLH;
       document.getElementById('line-height').value = autoLH;
+      const lbl = document.getElementById('line-height-val');
+      if(lbl) lbl.textContent = autoLH;
       _lastAutoLH = autoLH;
     } else {
       ST.lineHeight = currentLH;
@@ -1147,6 +1455,16 @@ function initStylePanel(){
 
   ['font-size','line-height','margin-v','margin-h'].forEach(id=>{
     document.getElementById(id).addEventListener('change', ()=>{
+      ST.fontSize   = parseFloat(document.getElementById('font-size').value);
+      ST.lineHeight = parseFloat(document.getElementById('line-height').value);
+      ST.marginV    = parseFloat(document.getElementById('margin-v').value);
+      ST.marginH    = parseFloat(document.getElementById('margin-h').value);
+      renderPages(); persist();
+    });
+  });
+  // Also trigger on input (range fires 'input' not 'change' while dragging)
+  ['font-size','line-height','margin-v','margin-h'].forEach(id=>{
+    document.getElementById(id).addEventListener('input', ()=>{
       ST.fontSize   = parseFloat(document.getElementById('font-size').value);
       ST.lineHeight = parseFloat(document.getElementById('line-height').value);
       ST.marginV    = parseFloat(document.getElementById('margin-v').value);
@@ -1174,12 +1492,12 @@ function renderEditorPanel(){
 }
 function mkSec(title, content){
   const w=document.createElement('div');
-  w.style.cssText='border:1px solid var(--g200);border-radius:9px;overflow:hidden;';
+  w.style.cssText='border:1px solid var(--border-subtle);border-radius:10px;overflow:hidden;';
   const h=document.createElement('div');
-  h.style.cssText='padding:9px 11px;background:var(--g50);font-size:.78rem;font-weight:700;color:var(--g700);cursor:pointer;display:flex;justify-content:space-between;align-items:center;';
-  h.innerHTML=`<span>${title}</span><span style="color:var(--g400)">▾</span>`;
+  h.style.cssText='padding:9px 12px;background:var(--surface-container-low);font-size:.76rem;font-weight:700;color:var(--text-primary);cursor:pointer;display:flex;justify-content:space-between;align-items:center;';
+  h.innerHTML=`<span>${title}</span><span style="color:var(--text-muted);font-size:.8rem;">▾</span>`;
   const b=document.createElement('div');
-  b.style.cssText='padding:11px;display:flex;flex-direction:column;gap:7px;';
+  b.style.cssText='padding:11px;display:flex;flex-direction:column;gap:7px;background:var(--surface-sheet);';
   b.appendChild(content);
   h.addEventListener('click',()=>{ b.style.display=b.style.display==='none'?'flex':'none'; h.querySelector('span:last-child').textContent=b.style.display==='none'?'▸':'▾'; });
   w.appendChild(h); w.appendChild(b); return w;
@@ -1384,6 +1702,14 @@ function resetData(){
   document.getElementById('line-height').value  = ST.lineHeight;
   document.getElementById('margin-v').value     = ST.marginV;
   document.getElementById('margin-h').value     = ST.marginH;
+  // sync slider labels
+  const lv = {
+    'font-size-val':   ST.fontSize + ' pt',
+    'line-height-val': ST.lineHeight + '',
+    'margin-v-val':    ST.marginV + ' mm',
+    'margin-h-val':    ST.marginH + ' mm',
+  };
+  Object.entries(lv).forEach(([id,v])=>{ const el=document.getElementById(id); if(el) el.textContent=v; });
   document.querySelectorAll('.color-dot').forEach(d=>d.classList.remove('active'));
   document.querySelector(`.color-dot[title="${ST.accent}"]`)?.classList.add('active');
   renderSectionList(); renderPages(); renderEditorPanel();
