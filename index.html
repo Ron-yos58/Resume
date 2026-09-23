@@ -230,9 +230,8 @@ input:checked+.toggle-track::after{transform:translateX(16px);}
 /* page visual */
 .resume-page{
   width:210mm;height:297mm;background:#fff;
-  box-shadow:0 8px 40px rgba(15,23,42,.18);
+  box-shadow:0 4px 28px rgba(0,0,0,.28);
   overflow:hidden;position:relative;flex-shrink:0;
-  border-radius:2px;
 }
 .r-page-num{
   position:absolute;bottom:4mm;left:0;right:0;
@@ -255,24 +254,44 @@ input:checked+.toggle-track::after{transform:translateX(16px);}
   font-weight:600;letter-spacing:.5px;user-select:none;flex-shrink:0;
 }
 
-/* ── RESUME TYPOGRAPHY (unchanged) ── */
-.r-page-inner{width:210mm;color:#111;}
+/* RESUME TYPOGRAPHY (shared across templates) */
+/* font-family, font-size, line-height are set dynamically via resumeCSS()
+   injected inside each .resume-page — do NOT hardcode them here */
+.r-page-inner{
+  width:210mm;
+  color:#111;
+}
 .r-name{font-size:22pt;font-weight:700;letter-spacing:-.5px;line-height:1.1;}
 .r-contact{display:flex;flex-wrap:wrap;gap:4px 14px;margin-top:6px;font-size:8.5pt;color:#555;}
 .r-contact span{display:flex;align-items:center;gap:3px;}
 .r-contact a{color:inherit;text-decoration:none;}
 .r-divider{height:2px;margin:8px 0;}
 .r-summary{font-size:9.5pt;color:#333;margin-bottom:10px;text-align:justify;line-height:1.5;}
-.r-section{margin-bottom:10px;page-break-inside:avoid;break-inside:avoid;}
-.r-section-title{font-size:10.5pt;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;padding-bottom:2px;margin-bottom:7px;page-break-after:avoid;break-after:avoid;}
-.r-entry{margin-bottom:8px;page-break-inside:avoid;break-inside:avoid;}
+/* CRITICAL: never split a section across pages */
+.r-section{
+  margin-bottom:10px;
+  page-break-inside:avoid;
+  break-inside:avoid;
+}
+.r-section-title{
+  font-size:10.5pt;font-weight:700;text-transform:uppercase;
+  letter-spacing:1.5px;padding-bottom:2px;margin-bottom:7px;
+  page-break-after:avoid;break-after:avoid;
+}
+.r-entry{
+  margin-bottom:8px;
+  page-break-inside:avoid;
+  break-inside:avoid;
+}
 .r-entry-head{display:flex;justify-content:space-between;align-items:baseline;gap:8px;}
-.r-entry-title{font-weight:700;font-size:9.5pt;color:#111;}
+.r-entry-title{font-weight:700;font-size:9.5pt;color:#111;page-break-after:avoid;break-after:avoid;}
 .r-entry-date{font-size:8.5pt;color:#666;white-space:nowrap;flex-shrink:0;}
 .r-entry-sub{font-size:9pt;color:#444;margin-top:1px;}
 .r-entry-desc{font-size:9pt;color:#555;font-style:italic;margin-top:1px;}
-.r-entry ul{margin:4px 0 0 0;padding-left:16px;}
-.r-entry li{font-size:9pt;color:#333;margin-bottom:2px;line-height:1.45;}
+.r-entry ul{margin:4px 0 0 0;padding-left:16px;list-style-position:outside;}
+.r-entry li{font-size:9pt;color:#333;margin-bottom:2px;line-height:1.45;page-break-inside:avoid;break-inside:avoid;break-after:avoid;}
+.r-section ul{margin:4px 0 0 0;padding-left:16px;list-style-position:outside;}
+.r-section li{font-size:9pt;color:#333;margin-bottom:2px;line-height:1.45;page-break-inside:avoid;break-inside:avoid;break-after:avoid;}
 .r-skills-grid{display:flex;flex-wrap:wrap;gap:4px;}
 .r-skill-tag{border-radius:4px;padding:2px 8px;font-size:8pt;font-weight:600;}
 .r-info-list{display:flex;flex-direction:column;gap:3px;}
@@ -286,6 +305,8 @@ input:checked+.toggle-track::after{transform:translateX(16px);}
 .r-course-row{display:flex;justify-content:space-between;gap:8px;font-size:8.5pt;}
 .r-course-name{color:#333;flex:1;}
 .r-course-date{color:#888;white-space:nowrap;flex-shrink:0;}
+
+/* two-column template */
 .tc-wrap{display:flex;min-height:297mm;}
 .tc-left{width:68mm;padding:14mm 7mm;flex-shrink:0;}
 .tc-right{flex:1;padding:14mm 14mm 14mm 10mm;}
@@ -295,12 +316,23 @@ input:checked+.toggle-track::after{transform:translateX(16px);}
 
 /* ── PRINT ── */
 @media print{
+  @page{margin:15mm;}
   body{background:#fff;}
   #topbar,#sidebar,#canvas-hud{display:none!important;}
   #main{padding:0;background:#fff;}
   #preview-wrapper{transform:none!important;}
-  .resume-page{box-shadow:none;}
+  .resume-page{box-shadow:none;height:auto;min-height:297mm;}
   .page-gap,.page-gap-label,.page-count-footer{display:none!important;}
+  /* Prevent content splitting across pages */
+  li, ul, .r-section, .r-entry, .tc-wrap, .tc-left, .tc-right{
+    page-break-inside:avoid!important;
+    break-inside:avoid!important;
+  }
+  /* Prevent orphaned headers */
+  h1, h2, h3, h4, .r-name, .r-section-title, .r-entry-title, .tc-section-title{
+    page-break-after:avoid!important;
+    break-after:avoid!important;
+  }
 }
 
 /* ── SCROLLBAR ── */
@@ -833,7 +865,7 @@ function buildSectionHtml(key, tplKey){
     case 'organizations':
       if(!data.organizations.length) return '';
       return `<div class="r-section"><div class="r-section-title" style="${secTitleStyle}">Organizations</div>
-        <ul style="margin:0;padding-left:16px;">${data.organizations.map(o=>`<li style="font-size:9pt;color:#333;margin-bottom:2px;line-height:1.45;">${x(o)}</li>`).join('')}</ul>
+        <ul>${data.organizations.map(o=>`<li style="font-size:9pt;color:#333;">${x(o)}</li>`).join('')}</ul>
       </div>`;
 
     case 'languages':
@@ -904,9 +936,26 @@ function resumeCSS(){
   line-height:${ST.lineHeight}!important;
   color:#111;
   padding:${ST.marginV}mm ${ST.marginH}mm;
+  box-sizing:border-box;
 }
 .r-page-inner *{
   font-family:inherit!important;
+}
+/* Prevent content splitting across pages */
+li, ul, .r-section, .r-entry, .tc-wrap, .tc-left, .tc-right{
+  page-break-inside:avoid!important;
+  break-inside:avoid!important;
+}
+/* Prevent orphaned headers */
+h1, h2, h3, h4, .r-name, .r-section-title, .r-entry-title, .tc-section-title{
+  page-break-after:avoid!important;
+  break-after:avoid!important;
+}
+/* Remove fixed heights to allow natural flow */
+.r-page-inner, .resume-page, .tc-wrap{
+  height:auto!important;
+  min-height:auto!important;
+  overflow:visible!important;
 }
 .r-name{font-size:22pt;font-weight:700;letter-spacing:-.5px;line-height:1.1;}
 .r-contact{display:flex;flex-wrap:wrap;gap:4px 14px;margin-top:6px;font-size:8.5pt;color:#555;}
@@ -915,15 +964,17 @@ function resumeCSS(){
 .r-divider{height:2px;margin:8px 0;}
 .r-summary{font-size:9.5pt;color:#333;margin-bottom:10px;text-align:justify;line-height:${ST.lineHeight};}
 .r-section{margin-bottom:10px;page-break-inside:avoid;break-inside:avoid;}
-.r-section-title{font-size:10.5pt;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;padding-bottom:2px;margin-bottom:7px;page-break-after:avoid;break-after:avoid;}
+.r-section-title{font-size:10.5pt;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;padding-bottom:2px;margin-bottom:7px;page-break-after:avoid;break-after:avoid;page-break-inside:avoid;break-inside:avoid;}
 .r-entry{margin-bottom:8px;page-break-inside:avoid;break-inside:avoid;}
 .r-entry-head{display:flex;justify-content:space-between;align-items:baseline;gap:8px;}
-.r-entry-title{font-weight:700;font-size:9.5pt;}
+.r-entry-title{font-weight:700;font-size:9.5pt;page-break-after:avoid;break-after:avoid;}
 .r-entry-date{font-size:8.5pt;color:#666;white-space:nowrap;flex-shrink:0;}
 .r-entry-sub{font-size:9pt;color:#444;margin-top:1px;}
 .r-entry-desc{font-size:9pt;color:#555;font-style:italic;margin-top:1px;}
-.r-entry ul{margin:4px 0 0 0;padding-left:16px;}
-.r-entry li{font-size:9pt;color:#333;margin-bottom:2px;line-height:${ST.lineHeight};}
+.r-entry ul{margin:4px 0 0 0;padding-left:16px;list-style-position:outside;}
+.r-entry li{font-size:9pt;color:#333;margin-bottom:2px;line-height:${ST.lineHeight};page-break-inside:avoid;break-inside:avoid;break-after:avoid;}
+.r-section ul{margin:4px 0 0 0;padding-left:16px;list-style-position:outside;}
+.r-section li{font-size:9pt;color:#333;margin-bottom:2px;line-height:${ST.lineHeight};page-break-inside:avoid;break-inside:avoid;break-after:avoid;}
 .r-skills-grid{display:flex;flex-wrap:wrap;gap:4px;}
 .r-skill-tag{border-radius:4px;padding:2px 8px;font-size:8pt;font-weight:600;}
 .r-info-list{display:flex;flex-direction:column;gap:3px;}
@@ -937,9 +988,9 @@ function resumeCSS(){
 .r-course-row{display:flex;justify-content:space-between;gap:8px;font-size:8.5pt;}
 .r-course-name{color:#333;flex:1;}
 .r-course-date{color:#888;white-space:nowrap;flex-shrink:0;}
-.tc-wrap{display:flex;}
-.tc-left{width:68mm;flex-shrink:0;}
-.tc-right{flex:1;}
+.tc-wrap{display:flex;break-inside:auto;height:auto!important;}
+.tc-left{width:68mm;flex-shrink:0;break-inside:auto;height:auto!important;}
+.tc-right{flex:1;break-inside:auto;height:auto!important;}
 .tc-section-title{font-size:9pt;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;border-bottom:1px solid rgba(255,255,255,.4);padding-bottom:3px;margin:10px 0 6px;color:#fff;}
 .tc-info-row{font-size:7.5pt;color:rgba(255,255,255,.85);margin-bottom:3px;}
 .tc-info-label{font-weight:700;display:block;color:rgba(255,255,255,.6);}
@@ -1219,101 +1270,74 @@ zoomRange.addEventListener('input', () => applyZoom(parseInt(zoomRange.value)));
 // Each page is an explicit 210mm × 297mm div. The browser prints
 // one div per page with no reflowing, no extra margins, no gaps.
 // ─────────────────────────────────────────────────────────────
-function downloadPDF(){
-  const tpl = TEMPLATES[currentTpl] || TEMPLATES.classic;
-  const hex = ST.accent;
+async function downloadPDF(){
+  const loading = document.getElementById('pdf-loading');
+  loading.classList.add('show');
+  try{
+    const tpl = TEMPLATES[currentTpl] || TEMPLATES.classic;
+    const hex = ST.accent;
 
-  // Reuse the same pagination engine as the preview
-  const blocks  = buildBlocks(currentTpl);
-  const heights = measureBlocks(blocks);
-  const pages   = paginateBlocks(heights, currentTpl);
-  const numPages = pages.length;
+    // Build a clean, standalone container — NO page-gap labels, NO UI elements
+    const container = document.createElement('div');
+    container.style.cssText = 'width:210mm;';
 
-  // CSS injected into the print window
-  const printStyles = resumeCSS() + `
-    *,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
-    html, body { margin:0; padding:0; background:#fff; }
-    /* Each .pdf-page is exactly one A4 sheet */
-    .pdf-page {
-      width:210mm;
-      height:297mm;
-      overflow:hidden;
-      position:relative;
-      page-break-after:always;
-      break-after:page;
-    }
-    .pdf-page:last-child { page-break-after:auto; break-after:auto; }
-    /* Page number — absolute positioned at bottom center, same as preview */
-    .pdf-pagenum {
-      position:absolute; bottom:4mm; left:0; right:0;
-      text-align:center; font-size:7.5pt; color:#aaa;
-      font-family:inherit;
-    }
-    /* Banner shown on screen only */
-    #print-banner {
-      font-family:sans-serif; background:#1a56db; color:#fff;
-      padding:10px 16px; font-size:13px;
-      display:flex; align-items:center; gap:12px; flex-wrap:wrap;
-    }
-    @media print {
-      #print-banner { display:none !important; }
-      html, body { margin:0; padding:0; }
-      @page { size:A4 portrait; margin:0; }
-    }
-  `;
+    const st = document.createElement('style');
+    st.textContent = resumeCSS() + `
+      /* Extra PDF safety */
+      .r-section{page-break-inside:avoid!important;break-inside:avoid!important;}
+      .r-entry{page-break-inside:avoid!important;break-inside:avoid!important;}
+      .r-section-title{page-break-after:avoid!important;break-after:avoid!important;}
+      .r-page-inner{padding:${ST.marginV}mm ${ST.marginH}mm;}
+    `;
+    container.appendChild(st);
 
-  // Build one .pdf-page div per page, mirroring renderPages()
-  let pagesHtml = '';
-  const showNums = ST.showPageNums !== false;
-
-  if(currentTpl === 'twocol'){
-    // Two-col: single page, content flows naturally
-    const inner = blocks[0].outerHTML;
-    pagesHtml = `<div class="pdf-page">${inner}</div>`;
-  } else {
-    for(let pi = 0; pi < numPages; pi++){
-      let innerHtml = '';
-      pages[pi].forEach(bi => {
-        innerHtml += blocks[bi].outerHTML;
+    if(currentTpl === 'twocol'){
+      const rightSections = ['summary','experience','education','internships','courses','organizations'];
+      let rightHtml = '';
+      sectionOrder.forEach(k => {
+        if(!sectionVis[k]) return;
+        if(!rightSections.includes(k)) return;
+        rightHtml += buildSectionHtml(k, 'twocol');
       });
-      // Page number label — only when enabled and more than 1 page
-      const pageNumHtml = (showNums && numPages > 1)
-        ? `<div class="pdf-pagenum">${pi + 1} / ${numPages}</div>`
-        : '';
-      pagesHtml += `
-        <div class="pdf-page">
-          <div class="r-page-inner" style="padding:${ST.marginV}mm ${ST.marginH}mm ${showNums && numPages > 1 ? ST.marginV + 5 : ST.marginV}mm ${ST.marginH}mm;">
-            ${innerHtml}
-          </div>
-          ${pageNumHtml}
-        </div>`;
+      const content = document.createElement('div');
+      content.innerHTML = tpl.wrapContent(rightHtml, data, hex, rgba(hex,.12), rgba(hex,.4), ST.marginV, ST.marginH, buildTwoColLeft);
+      container.appendChild(content);
+    } else {
+      const content = document.createElement('div');
+      content.className = 'r-page-inner';
+      // Header
+      let hHtml = tpl.headerHtml(data, hex);
+      hHtml = hHtml.replace(/VAR_MVmm/g, ST.marginV+'mm').replace(/VAR_MHmm/g, ST.marginH+'mm');
+      content.innerHTML = hHtml;
+      // Sections
+      sectionOrder.forEach(key => {
+        if(!sectionVis[key]) return;
+        const html = buildSectionHtml(key, currentTpl);
+        if(!html) return;
+        const el = document.createElement('div');
+        el.style.cssText = 'page-break-inside:avoid;break-inside:avoid;';
+        el.innerHTML = html;
+        content.appendChild(el);
+      });
+      container.appendChild(content);
     }
+
+    await html2pdf().set({
+      margin: 0,
+      filename: 'Ronald_Sebastian_Resume.pdf',
+      image: { type: 'jpeg', quality: 1 },
+      html2canvas: { scale: 3, useCORS: true, letterRendering: true },
+      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait', compress: true },
+      pagebreak: { mode: ['avoid-all', 'css', 'legacy'], before: '.page-break-before', avoid: ['.r-section','.r-entry'] }
+    }).from(container).save();
+
+    notify('PDF downloaded!');
+  } catch(err){
+    console.error(err);
+    notify('Error generating PDF — check console.');
+  } finally {
+    loading.classList.remove('show');
   }
-
-  const win = window.open('', '_blank', 'width=900,height=700');
-  if(!win){ notify('Allow popups to download PDF'); return; }
-
-  win.document.write(`<!DOCTYPE html>
-<html>
-<head>
-<meta charset="UTF-8"/>
-<title>Ronald Sebastian – Resume</title>
-<style>${printStyles}</style>
-</head>
-<body>
-<div id="print-banner">
-  <strong>💡 Save as PDF:</strong>
-  <span>In the print dialog set <strong>Margins → None</strong> and <strong>Paper → A4</strong></span>
-</div>
-${pagesHtml}
-</body>
-</html>`);
-  win.document.close();
-
-  win.onload = function(){
-    setTimeout(()=>{ win.focus(); win.print(); }, 500);
-  };
-  notify('Print dialog opening — save as PDF');
 }
 
 // ─────────────────────────────────────────────────────────────
